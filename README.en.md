@@ -13,8 +13,11 @@
 
 ZCode is an AI coding workspace with desktop, browser, and terminal interfaces. This repository contains the clients, backend services, shared UI, and Agent CLI and runtime source code.
 
+This repository is based on upstream v4.0.0 with external monitoring and telemetry reporting removed (ARMS RUM, OTLP, crash capture, TTFT, resource and network sampling, and conversation instrumentation), while keeping the core product functionality.
+
 ## Updates
 
+- **2026-11-26**: Released v4.0.0-audit.20261126 with monitoring and telemetry removed.
 - **2026-11-23**: Updated to ZCode v4.0.0.
 - 2026-11-12: Updated to ZCode v3.18.2.
 - 2026-11-12: Updated to ZCode v3.18.1.
