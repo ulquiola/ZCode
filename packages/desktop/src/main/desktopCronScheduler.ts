@@ -96,8 +96,6 @@ export function spawnCronScheduler(deps: CronSchedulerDeps): CronSchedulerHandle
       return;
     }
 
-    // scheduler 自采的 60 秒样本：main 只取 heap 作 scheduler 角色事件的 heap 维度，
-    // 非法样本在入口按 schema 丢弃。
     if (msg.type === "cron-dispatch-request") {
       if (isDisposing) {
         // App 退出时 Cron 与 Host 并行收口；进入 disposing 后继续派发会把新任务

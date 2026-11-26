@@ -9,12 +9,6 @@ import {
   waitForV4Pane,
   waitForV4TimelineContaining,
 } from "#e2e/helpers/v4-conversation";
-import {
-  beginConversationTelemetryCapture,
-  readAllEventReportRequests,
-  type ConversationTelemetryCaptureHandle,
-  type ConversationTelemetryReport,
-} from "#e2e/helpers/conversation-telemetry-parity-capture";
 
 const PROMPT_MARKER = "E2E_TOOL_INPUT_VALIDATION_PROVIDER_CONTENT";
 const COLD_PROMPT_MARKER = "E2E_TOOL_INPUT_VALIDATION_COLD_REPLAY";
@@ -42,8 +36,6 @@ describe("Z02 工具输入校验 provider content E2E", () => {
   it("malformed arguments 的精确 error tool result 在 live 与 cold replay 中保持一致", async function () {
     this.timeout(240000);
     await prepareV4ConversationE2E();
-    const telemetry = await beginConversationTelemetryCapture();
-    const baseline = toolStepsOf(await readAllEventReportRequests(telemetry)).length;
 
     const runId = Date.now();
     const prompt = `${PROMPT_MARKER}_${runId}: trigger the malformed tool input fixture.`;
@@ -67,7 +59,6 @@ describe("Z02 工具输入校验 provider content E2E", () => {
     if (!sessionId || sessionId === "draft") {
       throw new Error(`malformed tool input case 缺少真实 sessionId: ${sessionId ?? "null"}`);
     }
-    await assertToolFailureTelemetry(telemetry, baseline);
 
     // Bug 回归边界：renderer refresh 仍可能复用 CLI 内存；必须等待旧 Electron、
     // Host 和 Agent 进程树完整退出，才能证明 provider content 来自持久化历史。
@@ -154,45 +145,6 @@ function assertValidationHistory(requestJson: unknown) {
   expect(readContentBlocks(toolResult.message).map(withoutCacheControl)).toEqual([
     expectedToolResult,
   ]);
-}
-
-function toolStepsOf(reports: ConversationTelemetryReport[]) {
-  return reports.filter(
-    (r) =>
-      r.element_name === "agent_step" &&
-      (r.event_extra_detail as Record<string, string> | undefined)?.tool_call_id === TOOL_CALL_ID,
-  );
-}
-
-/**
- * 工具失败原因码：CLI 的 schema 校验失败是 ToolExecutionFailed（不是 InvalidInput），工具 step
- * 带 error_code=tool_execution_failed，error_type 保持旧口径；错误原文与模型给的原始参数都不出现在
- * 上报里。只看本用例开始后的增量。
- */
-async function assertToolFailureTelemetry(
-  telemetry: ConversationTelemetryCaptureHandle,
-  baseline: number,
-) {
-  let reports: ConversationTelemetryReport[] = [];
-  await browser.waitUntil(
-    async () => {
-      reports = await readAllEventReportRequests(telemetry);
-      return toolStepsOf(reports).length > baseline;
-    },
-    { timeout: 30000, timeoutMsg: `${TOOL_CALL_ID} 的 agent_step 没有上报` },
-  );
-  const steps = toolStepsOf(reports);
-  expect(steps).toHaveLength(baseline + 1);
-  expect(steps[baseline]!.event_extra_detail).toMatchObject({
-    tool_name: TOOL_NAME,
-    status: "fail",
-    error_type: "TOOL_EXEC_ERROR",
-    error_code: "tool_execution_failed",
-    error_msg: "[redacted]",
-  });
-  const serialized = JSON.stringify(reports);
-  expect(serialized).not.toContain("InputValidationError");
-  expect(serialized).not.toContain(RAW_INPUT_MARKER);
 }
 
 function readRecord(value: unknown): Record<string, unknown> {

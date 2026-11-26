@@ -2256,7 +2256,6 @@ async function createWindowRemoteConnectionHandle(params: {
       managerConnectionInvalidatedSubscription?.dispose();
       managerReconnectSubscription?.dispose();
       projectSubscription?.dispose();
-      await disposeServiceResourcesAndWait(services);
       await disposeHostRemoteConnection(connection);
     },
   };

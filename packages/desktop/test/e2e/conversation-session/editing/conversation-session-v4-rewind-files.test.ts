@@ -22,21 +22,12 @@ import {
   waitForV4PermissionDialog,
   waitForV4TimelineContaining,
 } from "#e2e/helpers/v4-conversation";
-import {
-  beginConversationTelemetryCapture,
-  readAllEventReportRequests,
-  type ConversationTelemetryCaptureHandle,
-  type ConversationTelemetryReport,
-} from "#e2e/helpers/conversation-telemetry-parity-capture";
 
 const CASE_ROOT = join(DEFAULT_WORKSPACE, "v4-rewind-files-e2e");
 const SAFE_RELATIVE_PATH = "v4-rewind-files-e2e/safe.txt";
 const CONFLICT_RELATIVE_PATH = "v4-rewind-files-e2e/conflict.txt";
 const SAFE_PATH = join(DEFAULT_WORKSPACE, SAFE_RELATIVE_PATH);
 const CONFLICT_PATH = join(DEFAULT_WORKSPACE, CONFLICT_RELATIVE_PATH);
-// fixtures/upstream/conversation-session/conversation-session-v4-rewind-files.json 里 PV4-21 原轮的两个工具调用。
-const SAFE_READ_TOOL_ID = "toolu_v4_rewind_files_safe_read";
-const SAFE_WRITE_TOOL_ID = "toolu_v4_rewind_files_safe_write";
 
 describe("PV4-21/PV4-22 conversation + file rewind", () => {
   afterEach(async () => {
@@ -51,14 +42,13 @@ describe("PV4-21/PV4-22 conversation + file rewind", () => {
   it("PV4-21 safe checkpoint 倒序恢复文件后才提交 same-session branch", async function () {
     this.timeout(150000);
     await prepareFileCase(SAFE_PATH);
-    const capture = await beginConversationTelemetryCapture();
 
     await sendV4Prompt("E2E_V4_REWIND_FILE_SAFE 请更新 safe.txt");
     await approvePendingFileWriteIfRequired();
     await waitForV4TimelineContaining("V4_REWIND_FILE_SAFE_ORIGINAL_REPLY", 90000);
     await waitForFileContent(SAFE_PATH, "safe-after\n");
     const originalSessionId = (await getV4PaneSnapshot()).sessionId;
-    // 点赞埋点要关联到所在轮：先赞原回复，编辑重发后再赞新回复（MR E source_message_id）。
+    // 先赞原回复，编辑重发后再赞新回复，覆盖同一行反馈按钮的开启/取消状态。
     await clickOnlyFeedbackLike();
 
     await waitForV4Edit();
@@ -83,70 +73,13 @@ describe("PV4-21/PV4-22 conversation + file rewind", () => {
     expect(finalSnapshot.timelineText).not.toContain("V4_REWIND_FILE_SAFE_ORIGINAL_REPLY");
     expect(finalSnapshot.timelineText).not.toContain("Conversation rewind applied");
     await clickOnlyFeedbackLike();
-    // 再点一次取消：上报 reaction=none，同样带所在轮。
+    // 再点一次取消，覆盖取消点赞状态。
     await clickOnlyFeedbackLike(false);
-
-    // 编辑重发轮与普通发送一样有 send_btn / completion（send_type=edit），并记一条回退结果。
-    const { reports, rewinds } = await waitForEditTelemetry(capture, 1);
-    const original = reports.find(
-      (r) => r.element_name === "send_btn" && detail(r).send_type === "normal",
-    );
-    expect(rewinds[0]!.talk_id).toBe(original?.talk_id);
-    expect(detail(rewinds[0]!)).toMatchObject({
-      action: "edit_resend",
-      workspace_mode: "rewind",
-      result: "accepted",
-      blocked_reason: "",
-      target_message_id: original?.message_id,
-      target_turn_state: "completedSuccess",
-      discarded_turns: "1",
-    });
-    expectEditTurnReported(reports, String(rewinds[0]!.message_id));
-
-    // 反馈的 message_id 是 assistant 行 entityId；source_message_id 才是所在轮的
-    // send_btn / message_completion message_id：原回复对应普通发送，新回复对应编辑重发轮。
-    const { all, feedbacks } = await waitForFeedbackReports(capture, 3);
-    expect(feedbacks).toHaveLength(3);
-    expect(detail(feedbacks[0]!)).toMatchObject({
-      reaction: "like",
-      source_message_id: original?.message_id,
-    });
-    for (const [index, reaction] of [
-      [1, "like"],
-      [2, "none"],
-    ] as const) {
-      expect(detail(feedbacks[index]!)).toMatchObject({
-        reaction,
-        source_message_id: rewinds[0]!.message_id,
-      });
-      expect(feedbacks[index]!.message_id).toBe(feedbacks[1]!.message_id);
-    }
-    for (const feedback of feedbacks) {
-      expect(feedback.talk_id).toBe(original?.talk_id);
-      expect(feedback.message_id).toBeTruthy();
-      expect(feedback.message_id).not.toBe(detail(feedback).source_message_id);
-    }
-    expect(feedbacks[0]!.message_id).not.toBe(feedbacks[1]!.message_id);
-    // 数据侧真正要的是按这个 ID 找到该轮的分析事件：原轮的 completion 与 Read、Write 两个工具 step
-    // 都要以同一个 message_id 上报（按 fixture 的 tool_call_id 逐个核对，只数条数分不出重复的 Read）；
-    // 编辑重发轮的 fixture 只回文本，它只核对 send_btn / completion（expectEditTurnReported）。
-    const sourceId = detail(feedbacks[0]!).source_message_id;
-    const turnEvents = (name: string) =>
-      all.filter(
-        (r) =>
-          r.element_name === name && r.message_id === sourceId && r.talk_id === original?.talk_id,
-      );
-    expect(turnEvents("message_completion")).toHaveLength(1);
-    const toolCallIds = turnEvents("agent_step")
-      .filter((r) => detail(r).step_type === "tool_call")
-      .map((r) => detail(r).tool_call_id);
-    expect(toolCallIds).toEqual(expect.arrayContaining([SAFE_READ_TOOL_ID, SAFE_WRITE_TOOL_ID]));
   });
 
   it("PV4-22 external modified 先 blocked，新 commandId 降级后只裁对话", async function () {
     this.timeout(150000);
     await prepareFileCase(CONFLICT_PATH);
-    const capture = await beginConversationTelemetryCapture();
 
     await sendV4Prompt("E2E_V4_REWIND_FILE_CONFLICT 请更新 conflict.txt");
     await approvePendingFileWriteIfRequired();
@@ -173,28 +106,6 @@ describe("PV4-21/PV4-22 conversation + file rewind", () => {
     const finalSnapshot = await getV4PaneSnapshot();
     expect(finalSnapshot.timelineText).not.toContain("V4_REWIND_FILE_CONFLICT_ORIGINAL_REPLY");
     expect(await countUpstreamRequestsContaining(editedMarker)).toBe(requestsBefore + 1);
-
-    // 冲突那次只记 blocked、不产生 send_btn；降级后的「只重置对话」才是真正的编辑重发轮。
-    const { reports, rewinds } = await waitForEditTelemetry(capture, 2);
-    expect(detail(rewinds[0]!)).toMatchObject({
-      action: "edit_resend",
-      workspace_mode: "rewind",
-      result: "blocked",
-    });
-    expect(["unsafe_files", "apply_conflict"]).toContain(detail(rewinds[0]!).blocked_reason);
-    expect(detail(rewinds[1]!)).toMatchObject({
-      action: "edit_resend",
-      workspace_mode: "preserve",
-      result: "accepted",
-      target_turn_state: "completedSuccess",
-      target_message_id: detail(rewinds[0]!).target_message_id,
-    });
-    expect(
-      reports.filter(
-        (r) => r.element_name === "send_btn" && r.message_id === rewinds[0]!.message_id,
-      ),
-    ).toHaveLength(0);
-    expectEditTurnReported(reports, String(rewinds[1]!.message_id));
   });
 });
 
@@ -222,42 +133,6 @@ async function approvePendingFileWriteIfRequired() {
   }
 }
 
-function detail(report: ConversationTelemetryReport): Record<string, string> {
-  return (report.event_extra_detail ?? {}) as Record<string, string>;
-}
-
-async function waitForEditTelemetry(
-  capture: ConversationTelemetryCaptureHandle,
-  rewindCount: number,
-) {
-  let reports: ConversationTelemetryReport[] = [];
-  const editCompletions = () =>
-    reports.filter(
-      (r) => r.element_name === "message_completion" && detail(r).send_type === "edit",
-    );
-  await browser.waitUntil(
-    async () => {
-      reports = await readAllEventReportRequests(capture);
-      return (
-        reports.filter((r) => r.element_name === "conversation_rewind").length >= rewindCount &&
-        editCompletions().length >= 1
-      );
-    },
-    { timeout: 30000, timeoutMsg: "编辑重发的 conversation_rewind / message_completion 没有上报" },
-  );
-  return { reports, rewinds: reports.filter((r) => r.element_name === "conversation_rewind") };
-}
-
-function expectEditTurnReported(reports: ConversationTelemetryReport[], messageId: string) {
-  const sends = reports.filter((r) => r.element_name === "send_btn" && r.message_id === messageId);
-  expect(sends).toHaveLength(1);
-  expect(detail(sends[0]!).send_type).toBe("edit");
-  const completion = reports.find(
-    (r) => r.element_name === "message_completion" && r.message_id === messageId,
-  );
-  expect(completion && detail(completion)).toMatchObject({ send_type: "edit", status: "success" });
-}
-
 /** 时间线里此刻只有一条可反馈的回复：悬停轮尾露出操作栏后点赞（或取消），等按钮状态变化。 */
 async function clickOnlyFeedbackLike(expectPressed = true) {
   const selector = `[data-testid^="${TID_V4_FEEDBACK_LIKE}-"]`;
@@ -275,17 +150,4 @@ async function clickOnlyFeedbackLike(expectPressed = true) {
     async () => (await button.getAttribute("aria-pressed")) === String(expectPressed),
     { timeout: 10000, timeoutMsg: `点击后点赞按钮 aria-pressed 没有变成 ${String(expectPressed)}` },
   );
-}
-
-async function waitForFeedbackReports(capture: ConversationTelemetryCaptureHandle, count: number) {
-  let all: ConversationTelemetryReport[] = [];
-  const feedbacks = () => all.filter((r) => r.element_name === "assistant_message_feedback");
-  await browser.waitUntil(
-    async () => {
-      all = await readAllEventReportRequests(capture);
-      return feedbacks().length >= count;
-    },
-    { timeout: 30000, timeoutMsg: "assistant_message_feedback 没有上报" },
-  );
-  return { all, feedbacks: feedbacks() };
 }

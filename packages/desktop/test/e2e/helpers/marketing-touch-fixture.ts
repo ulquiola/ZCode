@@ -2,14 +2,12 @@ import { createHash } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createMarketingTouchAssets } from "./marketing-touch-assets.js";
 import { createMarketingAssetGate } from "./marketing-touch-asset-gate.js";
-import { createTelemetryReportFixture } from "./telemetry-report-fixture.js";
 
 export async function createMarketingTouchFixture() {
   const { png, zip, assets } = await createMarketingTouchAssets();
   const assetGate = createMarketingAssetGate();
   const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
   const events: unknown[] = [];
-  const handleTelemetry = createTelemetryReportFixture();
   let held = true;
   let claimed = false;
   let claimFailure: unknown = null;
@@ -35,6 +33,8 @@ export async function createMarketingTouchFixture() {
   let generation = 0;
   let overrideDeliveries: unknown[] | null = null;
   let queryStatus = 200;
+  // 营销触达 action 上报属于业务链路（MTE-09 验证失败不阻塞关闭），
+  // 与已移除的遥测报告无关，需保留故障注入。
   let reportStatus = 200;
   let video = Buffer.alloc(0);
   const text = (content: string) => ({ format: "plaintext", content, style: null });
@@ -53,7 +53,6 @@ export async function createMarketingTouchFixture() {
         res.end(JSON.stringify(value));
       };
       const assetControl = assetGate.control(path);
-      if (await handleTelemetry(req, res)) return true;
       if (assetControl) {
         json(assetControl);
         return true;

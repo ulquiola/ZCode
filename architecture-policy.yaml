@@ -1998,7 +1998,10 @@ exceptions:
       - packages/shared/src/endpointHostname.ts
       - packages/shared/src/sessionCreateSource.ts
       - packages/server/src/stdioDeviceMid.ts
-    reason: 遥测移除只改动这些上游已有文件的调用点，并把 coding plan 入口状态与设备身份等纯业务判断从被删除的埋点模块迁到独立 helper；不接管整个未受管模块。
+      - packages/desktop/src/main/desktopTelemetryPolicy.ts
+      - packages/shared/src/processResourceSample.ts
+      - packages/shared/src/remoteWorkspaceConnection.ts
+    reason: 遥测移除只改动这些上游已有文件的调用点，并把 coding plan 入口状态、设备身份、进程资源 lane 与远端连接类型等纯业务判断从被删除的埋点模块迁到独立 helper；不接管整个未受管模块。
   - id: region-copy-suggested-prompts-edit
     rule: unmanaged-new-file
     paths: [packages/ui/src/v4/featureSuggestedPrompts.ts]
@@ -2370,10 +2373,6 @@ exceptions:
     rule: unmanaged-new-file
     paths: [apps/zcode-cli/packages/core/src/tool/handlers/workflow-skill-gate.ts]
     reason: 已入库的工作流技能门只更新一句注释，跟随 compaction 后读取状态改为只留补回的文件；门的判据、代码与 Core 模块边界不变，接管整个 tool 目录不在本次范围内。
-  - id: host-service-telemetry-existing-file
-    rule: unmanaged-new-file
-    paths: [packages/desktop/src/host/hostServiceResourceTelemetry.ts]
-    reason: Existing main-branch registration point gains a Host-only event and capability gate; adopting the whole Host runtime is outside this telemetry change.
   - id: browser-device-presets-export-unmanaged-new-files
     rule: unmanaged-new-file
     paths:
@@ -2449,7 +2448,6 @@ exceptions:
   - id: ui-more-locales-existing-edit
     rule: unmanaged-new-file
     paths:
-      - packages/desktop/src/host/hostSessionCreateTelemetry.ts
       - packages/services/src/marketing-touch/marketingTouch.ts
       - packages/services/src/marketing-touch/marketingTouchService.ts
       - packages/shared/src/marketingTouch.ts

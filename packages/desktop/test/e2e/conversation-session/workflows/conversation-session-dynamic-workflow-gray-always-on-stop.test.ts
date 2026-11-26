@@ -12,12 +12,6 @@ import {
   getLatestUpstreamToolResultByToolCallId,
   waitForUpstreamRequest,
 } from "#e2e/helpers/conversation-session-network";
-import {
-  beginConversationTelemetryCapture,
-  readAllEventReportRequests,
-  type ConversationTelemetryCaptureHandle,
-  type ConversationTelemetryReport,
-} from "#e2e/helpers/conversation-telemetry-parity-capture";
 
 // 用户从 GUI 停止一次在跑的 run（docs/dynamic-workflow/presentation.md「The run card」「The run pane」
 // 「The sidebar run line」、docs/dynamic-workflow/transcript-and-notifications.md「The notification row」
@@ -31,9 +25,6 @@ const RUN_DIGEST = `[data-testid^="${TID_CHAT_WORKFLOW_RUN_DIGEST}"]`;
 const RUN_NAME = "E2E 停止工作流";
 
 let runId = "";
-// workflow_run_result（docs/monitoring/business-monitoring.md「Workflow run 结果」）：只看本 spec 开始抓取之后的增量。
-let telemetry: ConversationTelemetryCaptureHandle | undefined;
-let reportBaseline = 0;
 
 describe("动态工作流 · 停止在跑的 run", () => {
   before(async () => {
@@ -48,8 +39,6 @@ describe("动态工作流 · 停止在跑的 run", () => {
 
   it("DWX-01 从 run 卡停止：卡、侧板、侧栏运行行都落到「已停止 · 你停止的」，没有一处还显示运行中", async function () {
     this.timeout(240000);
-    telemetry = await beginConversationTelemetryCapture();
-    reportBaseline = (await readAllEventReportRequests(telemetry)).length;
     await sendV4Prompt("E2E_DWX_START 使用工作流跑一个长时间等待的任务。");
     await approveV4Permission();
     await browser.waitUntil(
@@ -197,28 +186,6 @@ describe("动态工作流 · 停止在跑的 run", () => {
       runLineText: expect.stringContaining("等待"),
       cardStationText: expect.stringContaining("等待"),
     });
-
-    // 埋点：零子代理的 run 也报一条结果——用户停止，挂在发起轮下。
-    const reports = await reportsSinceBaseline();
-    const launchMessageId = String(
-      reports.find((r) => r.element_name === "send_btn")?.message_id ?? "",
-    );
-    expect(launchMessageId).not.toBe("");
-    let results: ConversationTelemetryReport[] = [];
-    await browser.waitUntil(
-      async () => {
-        results = await runResultsOf(runId);
-        return results.length > 0;
-      },
-      { timeout: 30000, timeoutMsg: "停止的 run 没有上报 workflow_run_result" },
-    );
-    expect(results[0]?.message_id).toBe(launchMessageId);
-    expect(detailOf(results[0]!)).toEqual({
-      workflow_run_id: runId,
-      status: "stopped",
-      stop_reason: "user",
-      actor_count: "0",
-    });
   });
 
   it("DWX-02 主代理读到 stop-reason=user 的通知；通知行写「工作流已停止 · 你停止的」，对话可以继续", async function () {
@@ -256,25 +223,8 @@ describe("动态工作流 · 停止在跑的 run", () => {
       "data-workflow-run-status",
       "stopped",
     );
-    // 停止通知与后续对话都跑完后，这个 run 的结果仍只有一条。
-    expect((await runResultsOf(runId)).length).toBe(1);
   });
 });
-
-async function reportsSinceBaseline(): Promise<ConversationTelemetryReport[]> {
-  if (!telemetry) throw new Error("埋点抓取未启动");
-  return (await readAllEventReportRequests(telemetry)).slice(reportBaseline);
-}
-
-function detailOf(report: ConversationTelemetryReport): Record<string, string> {
-  return (report.event_extra_detail ?? {}) as Record<string, string>;
-}
-
-async function runResultsOf(id: string): Promise<ConversationTelemetryReport[]> {
-  return (await reportsSinceBaseline()).filter(
-    (r) => r.element_name === "workflow_run_result" && detailOf(r).workflow_run_id === id,
-  );
-}
 
 interface DigestSnapshot {
   runId: string | null;

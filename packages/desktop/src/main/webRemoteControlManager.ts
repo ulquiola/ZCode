@@ -140,7 +140,6 @@ interface WindowControlRuntime {
   qrUrl: string;
   transport: WebRemoteControlDeviceTransportLike;
   mobileConnected: boolean;
-  hasEverPaired: boolean;
   hasObservedSendReadyForPairing: boolean;
   transportState?: WebRemoteControlDeviceTransportState;
   mobileViewState?: WebRemoteControlMobileViewState;
@@ -1666,9 +1665,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
       return;
     }
     if (state === "paired") {
-      if (previousTransportState !== "paired") {
-      }
-      runtime.hasEverPaired = true;
       clearMobileDisconnectGraceTimer(runtime);
       runtime.status = "active";
       runtime.mobileConnected = true;
@@ -1681,8 +1677,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
       return;
     }
     if (state === "kicked") {
-      if (previousTransportState !== "kicked") {
-      }
       preserveWindowRuntimeFailure(
         runtime.windowId,
         runtime,
@@ -1692,8 +1686,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
       return;
     }
     if (state === "error") {
-      if (previousTransportState !== "error") {
-      }
       runtime.status = "error";
       emitRuntimeStatus(runtime);
     }
@@ -1910,7 +1902,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
             qrUrl: "",
             transport,
             mobileConnected: false,
-            hasEverPaired: false,
             hasObservedSendReadyForPairing: false,
             pendingOutboundPayloads: [],
           };

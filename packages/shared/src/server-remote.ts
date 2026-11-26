@@ -62,9 +62,6 @@ export const serverRemoteInfoOutputSchema = z
         desktopContinuous: z.literal(true),
         websocketRpc: z.literal(true),
         virtualProjects: z.literal(true).optional(),
-        // 输入和严格输出保持同一能力合同，否则新 Server 会在监听前被自身 schema 拒绝。
-        processResourceTelemetry: z.boolean().optional(),
-        remoteConversationTelemetry: z.boolean().optional(),
       })
       .strict(),
   })
