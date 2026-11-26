@@ -187,9 +187,6 @@ function makeGateway(host: HostStub): ConversationV4Gateway {
         host.telemetryFacts.push(fact);
         host.telemetryNotifications.push({ channel: "fact", value: fact });
       },
-      emitTurnAdmissionTelemetry: (value) => {
-        host.telemetryNotifications.push({ channel: "admission", value });
-      },
       onTargetCompleted: (sessionId, event) => {
         host.projectionEvents.push({ sessionId, event });
       },
@@ -348,7 +345,7 @@ describe("订阅与帧调度", () => {
     expect(host.frames).toHaveLength(0);
   });
 
-  it("先发送兼容旧 App 的 started，再发送同 eventId 的独立接纳通知", () => {
+  it("只发送 live telemetry fact，不再发送独立接纳通知", () => {
     const host = makeHost();
     const gateway = makeGateway(host);
     const log = new EventLog();
@@ -366,19 +363,9 @@ describe("订阅与帧调度", () => {
     gateway.ingest("session-1", started);
     gateway.ingest("session-1", started);
 
-    expect(host.telemetryNotifications.map(({ channel }) => channel)).toEqual([
-      "fact",
-      "admission",
-    ]);
+    expect(host.telemetryNotifications.map(({ channel }) => channel)).toEqual(["fact"]);
     expect(host.telemetryFacts[0]).not.toHaveProperty("isFirstMessage");
     expect(host.telemetryFacts[0]).not.toHaveProperty("sendMode");
-    expect(host.telemetryNotifications[1]?.value).toMatchObject({
-      kind: "turn.admission",
-      eventId: String(started.id),
-      sourceCommandId: "command-1",
-      isFirstMessage: true,
-      sendMode: "queued",
-    });
     gateway.dispose();
   });
 

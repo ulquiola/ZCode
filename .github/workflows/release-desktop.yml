@@ -6,8 +6,13 @@ on:
       - "v*-audit.*"
   workflow_dispatch:
     inputs:
+      ref:
+        description: Git ref to build (branch, tag, or SHA)
+        required: true
+        default: dev
+        type: string
       tag:
-        description: Existing release tag to build and attach desktop installers to
+        description: Existing release tag to attach desktop installers to
         required: true
         type: string
 
@@ -37,10 +42,10 @@ jobs:
             target: win
             arch: x64
     steps:
-      - name: Checkout release tag
+      - name: Checkout release ref
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ inputs.ref || github.ref }}
           fetch-depth: 0
 
       - name: Setup pnpm

@@ -4,15 +4,24 @@ import { timestampSchema } from "./core.js";
 
 const MAX_TELEMETRY_SKILL_NAME_LENGTH = 64;
 const TELEMETRY_SKILL_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/u;
+// 技能名白名单允许 `-`/`_`，需要额外拒绝常见凭据形态，避免把密钥当作技能名带出。
+const TELEMETRY_SECRET_PATTERN =
+  /\b(?:sk|rk|pk)-[A-Za-z0-9_-]{12,}\b|\bgh[pousr]_[A-Za-z0-9]{20,}\b|\bAKIA[A-Z0-9]{16}\b|\bAIza[0-9A-Za-z_-]{30,}\b/u;
 
 /** 只接受本地技能名白名单；不引入外部上报模块。 */
-function isSafeSkillName(value: unknown): boolean {
+function isSafeSkillName(value: unknown): value is string {
   return (
     typeof value === "string" &&
     value.length > 0 &&
     value.length <= MAX_TELEMETRY_SKILL_NAME_LENGTH &&
-    TELEMETRY_SKILL_NAME_PATTERN.test(value)
+    TELEMETRY_SKILL_NAME_PATTERN.test(value) &&
+    !TELEMETRY_SECRET_PATTERN.test(value)
   );
+}
+
+/** 业务事实只保留可识别的本地技能名，其余统一降级为 unknown。 */
+export function sanitizeTelemetrySkillName(value: unknown): string {
+  return isSafeSkillName(value) ? value : "unknown";
 }
 
 const factBaseFields = {

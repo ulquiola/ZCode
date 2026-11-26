@@ -1825,10 +1825,6 @@ export function createConversationV4Gateway(
         method: V4_NOTIFICATIONS.conversationTelemetryFact,
         params: fact,
       }),
-    emitTurnAdmissionTelemetry: (fact) =>
-      context.notify({ method: V4_NOTIFICATIONS.turnAdmissionTelemetry, params: fact }),
-    emitModelRequestMetrics: (fact) =>
-      context.notify({ method: V4_NOTIFICATIONS.modelRequestMetrics, params: fact }),
     emitPluginUiToolResult: (result) =>
       context.notify({ method: V4_NOTIFICATIONS.pluginUiToolResult, params: result }),
     emitCuaPermissionObservation: (observation) =>

@@ -27,11 +27,12 @@ import {
   SUGGEST_PLUGIN_INSTALL_TOOL_NAME,
   SuggestPluginInstallOutputSchema,
 } from "@zcode/contracts";
-import { parseAutomationRunId, sanitizeTelemetrySkillName } from "@zcode/shared";
+import { parseAutomationRunId } from "@zcode/shared";
 import { workflowLifecycleFactFromProgress } from "./conversation-telemetry-workflow-facts.js";
 import {
   conversationTelemetryFactSchema,
   modelRequestMetricsFactSchema,
+  sanitizeTelemetrySkillName,
   turnAdmissionTelemetrySchema,
   type TurnAdmissionTelemetry,
   type ConversationTelemetryFact,
