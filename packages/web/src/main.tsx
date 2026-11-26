@@ -8,9 +8,7 @@ import "core-js/stable/array/to-sorted";
 import "core-js/stable/array/to-reversed";
 import "core-js/stable/object/group-by";
 import { createWebPlatform } from "#src/platform/index.js";
-import { mobilePluginDiscoveryTelemetrySchema } from "@zcode/shared";
 import {
-  sessionCreateTelemetrySchema,
   WEB_REMOTE_CONTROL_WORKSPACE_RECONNECT_TIMEOUT_MS,
   createWebRemoteControlConnectionRecoveryTimeoutFailure,
   resolveWebRemoteControlRelayWsUrl,
@@ -1560,13 +1558,6 @@ async function bootstrapExternalRelayWebRemoteControl(
             platform={createWebPlatform({
               externalWebRemoteControlProxy: {
                 requestPlatformMethod,
-                reportTelemetryEvent: (event) => {
-                  const parsed = sessionCreateTelemetrySchema
-                    .or(mobilePluginDiscoveryTelemetrySchema)
-                    .safeParse(event);
-                  if (parsed.success)
-                    transport.sendPayload({ zcode_type: "telemetry-report", event: parsed.data });
-                },
               },
             })}
             // Bug 原因：手机复用 Desktop Host 中已持久化的 Assistant row，但 Root 默认关闭
@@ -1693,13 +1684,6 @@ async function bootstrapExternalRelayWebRemoteControl(
             platform={createWebPlatform({
               externalWebRemoteControlProxy: {
                 requestPlatformMethod,
-                reportTelemetryEvent: (event) => {
-                  const parsed = sessionCreateTelemetrySchema
-                    .or(mobilePluginDiscoveryTelemetrySchema)
-                    .safeParse(event);
-                  if (parsed.success)
-                    transport.sendPayload({ zcode_type: "telemetry-report", event: parsed.data });
-                },
               },
             })}
             initialWorkspaceAbsPath={workspaceKey}

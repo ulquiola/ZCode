@@ -6,17 +6,13 @@ import {
   type DataSyncListResult,
   type PluginDataSyncPayload,
   type PluginOptionSyncValue,
-  type IPlatformService,
-  type RemoteTarget,
   type ZCodePluginsInstallResult,
 } from "@zcode/shared";
 import {
-  withPluginTelemetry,
   type IDataSyncCategoryService,
   type IPluginManagementService,
   type IServiceAccessor,
 } from "@zcode/services";
-import { reportAppTelemetryEvent } from "@/lib/appTelemetry.js";
 import { logger } from "@/logger.js";
 import {
   buildMarketplacePluginSyncItems,
@@ -36,65 +32,13 @@ import {
  * 方向只取决于调用方把哪一端当 source、哪一端当 target。
  */
 
-/** 一个插件在目标端导入结束后的终态，用于逐插件 sync 埋点。 */
-export interface PluginSyncOutcome {
-  pluginId: string;
-  marketplace: string;
-  result: DataSyncImportResultItem;
-  durationMs: number;
-}
-
-/** 推送中由弹窗注入：某项进入 / 离开可「停止」的阶段（远端 add / install），以及逐插件结果上报。 */
+/** 推送中由弹窗注入：某项进入 / 离开可「停止」的阶段（远端 add / install）。 */
 export interface DataSyncPushControl {
   setStoppable(key: string, stop: (() => void) | null): void;
-  reportPluginSyncResult?(outcome: PluginSyncOutcome): void;
 }
 
 /** 按行停止后该项的错误标记，弹窗显示为「已停止」。 */
 export const DATA_SYNC_STOPPED_ERROR = "stopped";
-
-function toPluginSyncTelemetryResult(item: DataSyncImportResultItem): string {
-  if (item.status === "created" || item.status === "updated") return "success";
-  if (item.status === "skipped") return "noop";
-  if (item.error === DATA_SYNC_STOPPED_ERROR) return "cancelled";
-  return "failure";
-}
-
-/**
- * 逐插件 sync 终态埋点（docs/monitoring/plugin-lifecycle-telemetry.md）。
- * 修复原因：旧插件同步弹窗删除后，逐插件「同步最终结果」的上报一起被删除，没有替代；
- * 底层 install / enable 的 trigger=sync 事件表达不了安装后版本核验、options 失败这类终态。
- * 只上报白名单字段，不带原始错误或路径；上报失败不影响同步结果。
- */
-export function createPluginSyncResultReporter(
-  platform: Pick<IPlatformService, "reportTelemetryEvent">,
-  remoteKind: RemoteTarget["kind"] | undefined,
-): (outcome: PluginSyncOutcome) => void {
-  return ({ pluginId, marketplace, result, durationMs }) => {
-    void reportAppTelemetryEvent(
-      platform,
-      {
-        elementName: "plugin_lifecycle",
-        eventRegion: "app",
-        eventType: "result",
-        eventExtraDetail: {
-          schema_version: "1",
-          action: "sync",
-          trigger: "sync",
-          scope: USER_SCOPE,
-          plugin_id: pluginId,
-          marketplace,
-          client_kind: "desktop",
-          workspace_kind: "remote",
-          ...(remoteKind ? { remote_kind: remoteKind } : {}),
-          result: toPluginSyncTelemetryResult(result),
-          duration_ms: String(Math.max(0, Math.round(durationMs))),
-        },
-      },
-      "DataSync",
-    );
-  };
-}
 
 type MarketplaceSourcePayload =
   | { kind: "official" }
@@ -289,10 +233,7 @@ export function createMarketplacePluginDataSyncService(
     },
 
     async importSyncItems({ payload, items }): Promise<DataSyncImportResult> {
-      const management: IPluginManagementService = withPluginTelemetry(
-        services.pluginManagementService,
-        { trigger: "sync", client_kind: "desktop" },
-      );
+      const management: IPluginManagementService = services.pluginManagementService;
       const { homedir } = await services.systemService.info();
       const workspace = { workspacePath: homedir };
       const overview = await management.getPluginsOverview({
@@ -426,7 +367,6 @@ export function createMarketplacePluginDataSyncService(
       const results: DataSyncImportResultItem[] = [];
       // 逐项串行，每项单独成功或失败。
       for (const item of items) {
-        const startedAt = Date.now();
         let result: DataSyncImportResultItem;
         try {
           result = await importItem(item);
@@ -439,13 +379,6 @@ export function createMarketplacePluginDataSyncService(
           };
         }
         results.push(result);
-        const exported = payloadByKey.get(item.key);
-        control?.reportPluginSyncResult?.({
-          pluginId: exported?.pluginId ?? item.key,
-          marketplace: exported?.marketplace ?? item.key.slice(item.key.lastIndexOf("@") + 1),
-          result,
-          durationMs: Date.now() - startedAt,
-        });
       }
       return { results };
     },
@@ -498,28 +431,10 @@ export function createPluginCategoryDataSyncService(
       const inlineItems = items.filter((item) => isInlineKey(item.key));
       const marketplaceItems = items.filter((item) => !isInlineKey(item.key));
       if (payload.inline && inlineItems.length > 0) {
-        // inline 插件按批导入，耗时为该批的耗时；整批失败时逐项上报失败后照常抛出。
-        const pluginIdByKey = new Map(
-          payload.inline.items.map((item) => [item.key, item.pluginId]),
-        );
-        const startedAt = Date.now();
-        const report = (result: DataSyncImportResultItem) =>
-          control?.reportPluginSyncResult?.({
-            pluginId: pluginIdByKey.get(result.key) ?? result.key,
-            marketplace: "inline",
-            result,
-            durationMs: Date.now() - startedAt,
-          });
-        let inlineResults: DataSyncImportResultItem[];
-        try {
-          inlineResults = (
-            await inline.importSyncItems({ payload: payload.inline, items: inlineItems })
-          ).results;
-        } catch (error) {
-          for (const item of inlineItems) report({ key: item.key, status: "failed" });
-          throw error;
-        }
-        for (const result of inlineResults) report(result);
+        // inline 插件按批导入；整批失败时照常抛出。
+        const inlineResults = (
+          await inline.importSyncItems({ payload: payload.inline, items: inlineItems })
+        ).results;
         results.push(...inlineResults);
       }
       if (payload.marketplace && marketplaceItems.length > 0) {

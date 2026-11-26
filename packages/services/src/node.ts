@@ -228,8 +228,8 @@ export { createFileWatcherService } from "./fileWatcher/fileWatcherService.js";
 export { createOAuthService } from "./oauth/oauthService.js";
 export { createOAuthProviderLogoutHandler } from "./oauth/oauthProviderLogout.js";
 export { OAuthCredentialRepo } from "./oauth/repo/oauthCredentialRepo.js";
-export { createTelemetryCore, ensureTelemetryDeviceMid } from "./telemetry/telemetryCore.js";
-export type { EnsureTelemetryDeviceMidOptions } from "./telemetry/telemetryCore.js";
+export { ensureDeviceMid } from "./device/deviceMid.js";
+export type { EnsureDeviceMidOptions } from "./device/deviceMid.js";
 export type { AccountRequestAuthResolver } from "./model-provider/accountProviderRequestAuthService.js";
 export { createAccountProviderCredentialStore } from "./model-provider/accountProviderCredentialStore.js";
 export type {
@@ -487,7 +487,6 @@ import {
 } from "./zcode-agent/zcodeAgentService.js";
 import type { PluginUserOptionsReader } from "./zcode-agent/pluginHostQueriesClient.js";
 import type { ZCodeAgentCommandResolver } from "./zcode-agent/zcodeAgentProcessManager.js";
-import { buildAgentTelemetrySpawnEnv } from "./zcode-agent/agentTelemetryEnv.js";
 import { resolveZCodeAgentPresentationSurface } from "./zcode-agent/zcodeAgentPresentationSurface.js";
 import { createZCodeTaskServiceAdapter } from "./zcode-agent/zcodeTaskServiceAdapter.js";
 import { createZCodeSessionService } from "./zcode-session/zcodeSessionService.js";
@@ -601,7 +600,7 @@ import {
 import { ensureAppCaCert } from "./runtime-tools/appCaCert.js";
 import { buildHelperOpenArgs, isCuaLocalDevelopmentRuntime } from "@zcode/zcode-cua/broker/server";
 import { createServiceLogger, type ServiceLogger } from "#src/logger/serviceLogger.js";
-import { ensureTelemetryDeviceMid } from "#src/telemetry/telemetryCore.js";
+import { ensureDeviceMid } from "./device/deviceMid.js";
 import { IOffPeakTaskService } from "./session/offPeakTask.js";
 import type { HighspeedMockScenario } from "@zcode/shared";
 import { IHighspeedCardService } from "./highspeed/highspeedCard.js";
@@ -682,7 +681,7 @@ import {
   type OAuthAccountAvailability,
   type ServiceAuthorityMode,
   resolveRuntimeZCodeEndpointOrigin,
-  resolveSafeTelemetryHostname,
+  resolveSafeEndpointHostname,
   type BrowserBackendDescriptor,
   type BrowserClientMode,
   type BrowserCommand,
@@ -692,7 +691,6 @@ import {
   ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
   type ZCodeAutomation,
   type ZCodeAutomationRun,
-  getCapturedZCodeAgentTelemetryEnv,
   ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
   ZAI_PROVIDER_ID,
   zcodeAccountAccessSchema,
@@ -1292,9 +1290,6 @@ export function createLocalServices(options: {
   feedback?: Partial<
     Omit<CreateFeedbackServiceOptions, "apiClient" | "credentialService" | "oauthService">
   >;
-  reportPluginTelemetryEvent?: (
-    event: import("@zcode/shared").RendererTelemetryEventPayload,
-  ) => void | Promise<void>;
   /**
    * 插件管理变更成功返回（Window Host 侧信号），桌面 Host 用它重推扩展进程的插件清单，
    * 配置与重置还通知该插件的扩展设置订阅者（docs/plugins/extension-host.md §16.7）。
@@ -1827,7 +1822,6 @@ export function createLocalServices(options: {
   });
   invalidatePluginUiAccounts = () => pluginUiAccounts.invalidate();
   const pluginUiBridgeService = createPluginUiBridgeService({
-    reportTelemetryEvent: options?.reportPluginTelemetryEvent,
     openInstance: (params) => pluginUiAccounts.open(params),
     closeInstance: (params) => pluginUiAccounts.close(params),
     validateInstance: (params) => zcodeAgentService.validateMcpUiInstance(params),
@@ -2408,7 +2402,6 @@ export function createLocalServices(options: {
   const worktreeRemovalGate = createWorktreeRemovalGate();
   const zcodeAgentService = createZCodeAgentService({
     credentialCipherProvider,
-    reportPluginTelemetryEvent: options?.reportPluginTelemetryEvent,
     runSessionOperation: (target, operation) =>
       worktreeRemovalGate.runSessionOperation(
         target.sessionId,
@@ -2593,16 +2586,6 @@ export function createLocalServices(options: {
           }
         }
       }
-      const telemetryEnv = getCapturedZCodeAgentTelemetryEnv();
-      const telemetryConfigured = Boolean(
-        telemetryEnv.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || telemetryEnv.OTEL_EXPORTER_OTLP_ENDPOINT,
-      );
-      const telemetryProfile = telemetryConfigured
-        ? await oauthCredentialRepo.loadActiveUserProfile().catch(() => null)
-        : null;
-      const telemetryDeviceMid = telemetryConfigured
-        ? options?.agentTelemetry?.getDeviceMid?.()?.trim()
-        : undefined;
       // Host 是旧配置迁移的唯一写入者。Agent spawn 前等待初始化完成，避免 Worker
       // 先拿到尚不存在的 provider_config.json 并发布短暂空 Registry。
       await providerConfigRuntime.start();
@@ -2627,12 +2610,6 @@ export function createLocalServices(options: {
         // broker 凭据（socket/token）注入 agent spawn env，让内置 zcode-cua plugin 的
         // computer-use MCP server 经 __zcode-plugin-host 恢复 token 后连上 broker。
         ...cuaProductHelperEnv,
-        ...buildAgentTelemetrySpawnEnv({
-          deviceMid: telemetryDeviceMid,
-          runtimeSurface: options?.agentTelemetry?.runtimeSurface ?? "remote_workspace_host",
-          telemetryEnv,
-          userId: telemetryProfile?.id,
-        }),
         ...createNodeProviderRuntimePathEnv({
           // Built-in Active 路径按当前 Endpoint 隔离，不能通过同步的固定路径
           // getter 读取；Agent spawn 必须等待本轮 Endpoint Source 完成解析和物化。
@@ -3119,7 +3096,7 @@ export function createLocalServices(options: {
           resolveCodingPlanSupport: () =>
             resolveOffPeakCodingPlanSupport(offPeakCredentialResolverDeps),
           resolveTelemetryProviderName: async () =>
-            resolveSafeTelemetryHostname(await originResolver.resolveOrigin()),
+            resolveSafeEndpointHostname(await originResolver.resolveOrigin()),
           resolveModelSelection: async (input) => {
             await providerRuntime.start();
             const support = await resolveOffPeakCodingPlanSupport(offPeakCredentialResolverDeps);
@@ -3299,7 +3276,6 @@ export function createLocalServices(options: {
       IPluginManagementService,
       createPluginManagementService({
         zcodeAgentService,
-        reportTelemetryEvent: options?.reportPluginTelemetryEvent,
         onMutationSucceeded: options?.onPluginManagementMutated,
       }),
     )
@@ -3398,7 +3374,7 @@ export function createLocalServices(options: {
   return services;
 }
 
-export function createTelemetryUserIdLoader(
+export function createRemoteControlUserIdLoader(
   credentialService: Pick<ICredentialService, "load">,
 ): () => Promise<string> {
   const log = createServiceLogger("telemetry-user-id");
@@ -3410,7 +3386,7 @@ export function createTelemetryUserIdLoader(
       }
 
       const rawUserInfo = await credentialService.load(`oauth:${activeProvider}:user_info`);
-      return readTelemetryOAuthUserId(rawUserInfo);
+      return readOAuthUserId(rawUserInfo);
     } catch (error) {
       if (!isCredentialDecryptError(error)) {
         throw error;
@@ -3425,7 +3401,7 @@ export function createTelemetryUserIdLoader(
 }
 
 /** 仅给同一事件账号返回当前 ZCode JWT；不缓存、不修改登录凭据。 */
-export function createTelemetryAuthorizationLoader(
+export function createRemoteControlAuthorizationLoader(
   credentialService: Pick<ICredentialService, "load">,
 ): (userId: string) => Promise<string | null> {
   return async (userId) => {
@@ -3435,7 +3411,7 @@ export function createTelemetryAuthorizationLoader(
       // 中国区同样持有 ZCode 主 JWT；不能用旧的两渠道白名单阻断远控和上报。
       if (!provider || !isBuiltinOAuthProvider(provider)) return null;
       const readUserId = async () =>
-        readTelemetryOAuthUserId(await credentialService.load(`oauth:${provider}:user_info`));
+        readOAuthUserId(await credentialService.load(`oauth:${provider}:user_info`));
       if ((await readUserId()) !== userId) return null;
       const jwt = await credentialService.load("zcodejwttoken");
       // 退出/切账号可能发生在异步读取期间；禁止将旧身份的 token 附到其他账号事件上。
@@ -3451,15 +3427,7 @@ export function createTelemetryAuthorizationLoader(
   };
 }
 
-export function createTelemetryMarketingParamsLoader(
-  credentialService: ICredentialService,
-): () => Promise<import("@zcode/shared").OAuthLoginAttribution | null> {
-  // 恢复原因：固定返回 null 会丢掉已保存的渠道归因，数仓应读取 OAuth 的同一份事实。
-  const repo = new OAuthCredentialRepo(credentialService);
-  return () => repo.loadLoginAttribution();
-}
-
-function readTelemetryOAuthUserId(rawUserInfo: string | null): string {
+function readOAuthUserId(rawUserInfo: string | null): string {
   if (!rawUserInfo) {
     return "";
   }
@@ -3622,7 +3590,7 @@ export async function createServerHostServices(options: {
   // buildZCodeSourceHeaders() 又只读不生成。原修复只放在旧 stdio entry，SSH/WSL/Docker 的 Core 与
   // Lite HTTP 入口共用本装配却没有确保，首次 Start Plan 权益查询返回 400，Start 模型被判为不可用。
   // 收口到本装配，所有独立 Server 入口在创建 services 前得到本机自己的 deviceMid；失败只告警、不阻断启动、不伪造 ID。
-  await ensureTelemetryDeviceMid().catch((error: unknown) => {
+  await ensureDeviceMid().catch((error: unknown) => {
     createServiceLogger("server-host").warn(
       undefined,
       "deviceMid 初始化失败，ZCode endpoint 请求将不带 X-Device-Mid:",

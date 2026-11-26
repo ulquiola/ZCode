@@ -157,16 +157,11 @@ export function App({
   const platform = usePlatform();
   // 命令中心「重新加载扩展」：只有桌面本机 Host 提供扩展门面时才出现。
   const reloadExtensions = useReloadExtensions();
-  // 进程内存本地诊断日志：每窗口一个 60s 采样器，
-  // 经门控后写桌面主日志；Web 端无日志桥时为 no-op。同一次读数还经 preload 桥把 heap 送 main 的
-  // renderer_main 资源事件，无桥时同样 no-op。
-  const reportRendererHeapSample = platform.reportRendererHeapSample;
+  // 进程内存本地诊断日志：每窗口一个 60s 采样器，经门控后写桌面主日志；Web 端无日志桥时为 no-op。
   useEffect(() => {
-    const memoryDiagnosticsLogger = startMemoryDiagnosticsLogger({
-      reportHeapSample: reportRendererHeapSample,
-    });
+    const memoryDiagnosticsLogger = startMemoryDiagnosticsLogger();
     return () => memoryDiagnosticsLogger.stop();
-  }, [reportRendererHeapSample]);
+  }, []);
   const activeWorkspaceRpcTarget = useTabStore(
     useShallow((state) => {
       if (!state.activeTabId) {

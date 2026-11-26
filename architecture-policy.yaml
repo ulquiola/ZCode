@@ -198,27 +198,6 @@ modules:
       - packages/shared/src/agent-crash-diagnostic/contract.ts
     layers: {app: "."}
     owner: desktop
-  - id: conversation-telemetry-engine
-    roots: [packages/shared/src/conversation-telemetry, packages/shared/vitest.config.ts]
-    managed: true
-    requires: [shared]
-    publicEntrypoints:
-      - packages/shared/src/conversation-telemetry/index.ts
-      - packages/shared/src/conversation-telemetry/contract.ts
-      - packages/shared/src/conversation-telemetry/messageTelemetry.ts
-      - packages/shared/src/conversation-telemetry/providerTelemetryIdentity.ts
-      - packages/shared/src/conversation-telemetry/remoteTelemetryEvent.ts
-    layers: {app: "."}
-    owner: conversation
-  - id: conversation-telemetry-service
-    roots: [packages/services/src/conversation-telemetry]
-    managed: true
-    requires: [shared, services, rpc, conversation-telemetry-engine]
-    publicEntrypoints:
-      - packages/services/src/conversation-telemetry/remoteConversationTelemetry.ts
-      - packages/services/src/conversation-telemetry/contract.ts
-    layers: {app: "."}
-    owner: conversation
   - id: sqlite-migrations
     roots:
       - packages/shared/src/sqlite-migrations
@@ -1369,42 +1348,6 @@ modules:
       - packages/shared/src/local-ttft/contract.ts
     layers:
       contract: .
-  # local-ttft-renderer：由 architecture:adopt 登记
-  - id: local-ttft-renderer
-    roots:
-      - packages/ui/src/v4/telemetry/local-ttft
-    managed: true
-    requires:
-      - shared
-      - ui
-    publicEntrypoints:
-      - packages/ui/src/v4/telemetry/local-ttft/contract.ts
-    layers:
-      ui: .
-  # local-ttft-desktop：由 architecture:adopt 登记
-  - id: local-ttft-desktop
-    roots:
-      - packages/desktop/src/renderer/src/local-ttft
-    managed: true
-    requires:
-      - shared
-      - ui
-    publicEntrypoints:
-      - packages/desktop/src/renderer/src/local-ttft/contract.ts
-    layers:
-      ui: .
-  # local-ttft-cli：由 architecture:adopt 登记
-  - id: local-ttft-cli
-    roots:
-      - apps/zcode-cli/packages/bootstrap/src/zcode-protocol-v4/local-ttft
-    managed: true
-    requires:
-      - shared
-      - zcode-cli
-    publicEntrypoints:
-      - apps/zcode-cli/packages/bootstrap/src/zcode-protocol-v4/local-ttft/contract.ts
-    layers:
-      adapters: .
   # cli-official-command-endpoint：由 architecture:adopt 登记
   - id: cli-official-command-endpoint
     roots:
@@ -2043,6 +1986,19 @@ global:
   acceptedUpstreamSnapshot: scripts/architecture/upstream-snapshot.json
 
 exceptions:
+  - id: telemetry-removal-unmanaged-edits
+    rule: unmanaged-new-file
+    paths:
+      - apps/zcode-cli/packages/cli/src/tui-prompt-handler-runtime.ts
+      - packages/desktop/src/main/databaseStartupRelay.ts
+      - packages/desktop/src/main/resourceManagerWindow.ts
+      - packages/shared/src/official-glm-model-id.ts
+      - packages/ui/src/lib/codingPlanEntryPlanState.ts
+      - packages/services/src/device/deviceMid.ts
+      - packages/shared/src/endpointHostname.ts
+      - packages/shared/src/sessionCreateSource.ts
+      - packages/server/src/stdioDeviceMid.ts
+    reason: 遥测移除只改动这些上游已有文件的调用点，并把 coding plan 入口状态与设备身份等纯业务判断从被删除的埋点模块迁到独立 helper；不接管整个未受管模块。
   - id: region-copy-suggested-prompts-edit
     rule: unmanaged-new-file
     paths: [packages/ui/src/v4/featureSuggestedPrompts.ts]
@@ -2414,18 +2370,6 @@ exceptions:
     rule: unmanaged-new-file
     paths: [apps/zcode-cli/packages/core/src/tool/handlers/workflow-skill-gate.ts]
     reason: 已入库的工作流技能门只更新一句注释，跟随 compaction 后读取状态改为只留补回的文件；门的判据、代码与 Core 模块边界不变，接管整个 tool 目录不在本次范围内。
-  - id: conversation-telemetry-existing-state-machine-size
-    rule: max-file-lines
-    paths:
-      - packages/shared/src/conversation-telemetry/conversationTelemetryEngine.ts
-      - packages/shared/src/conversation-telemetry/messageTelemetry.ts
-    reason: Relocate the existing renderer state machine and builders unchanged so desktop and execution share token/step semantics; retain one lifecycle owner instead of splitting state to meet line counts.
-  - id: conversation-telemetry-existing-state-machine-lint
-    rule: disable-count
-    paths:
-      - packages/shared/src/conversation-telemetry/conversationTelemetryEngine.ts
-      - packages/shared/src/conversation-telemetry/messageTelemetry.ts
-    reason: Preserve the two original file-length annotations while relocating the existing implementation.
   - id: host-service-telemetry-existing-file
     rule: unmanaged-new-file
     paths: [packages/desktop/src/host/hostServiceResourceTelemetry.ts]

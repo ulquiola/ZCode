@@ -1,4 +1,3 @@
-import type { RendererTelemetryEventPayload } from "@zcode/shared";
 /* eslint-disable max-lines -- Web 远程控制 manager 承担外部 relay app payload 路由与 workspace bridge 编排。 */
 import type { MessagePortMain, UtilityProcess as ElectronUtilityProcess } from "electron";
 import { randomUUID } from "node:crypto";
@@ -10,10 +9,6 @@ import {
 } from "@zcode/client";
 import {
   buildWebRemoteControlExternalQrUrl,
-  buildWebRemoteControlBridgeResultTelemetry,
-  buildWebRemoteControlPairResultTelemetry,
-  classifyRemoteUsageError,
-  parseRemoteWorkspaceIdentity,
   WEB_REMOTE_CONTROL_OUTBOUND_PAYLOAD_BUFFER_TIMEOUT_MS,
   type ZCodeEndpointUrls,
   type HostPreparedProjectWorkspace,
@@ -42,8 +37,6 @@ import {
   type WebRemoteControlWorkspaceBridgeOpenPayload,
   type WebRemoteControlWorkspaceListResult,
   type WebRemoteControlWorkspaceTarget,
-  type RemoteUsageRemoteKind,
-  type TelemetryEventPayload,
   measureWebRemoteControlRpcRelayEnvelopeBytes,
 } from "@zcode/shared";
 import { WebRemoteControlV2ConnectionError } from "@zcode/shared/web-remote-relay";
@@ -70,6 +63,8 @@ import {
   type RunWebRemoteControlRendererAction,
   type WebRemoteControlActionRequestPayload,
 } from "#src/main/web-remote-relay/index.js";
+
+type RemoteUsageRemoteKind = "ssh" | "wsl" | "docker" | "server";
 
 interface WebRemoteControlHostAttachmentHandle {
   entryId: string;
@@ -210,8 +205,6 @@ interface WebRemoteControlManagerDependencies {
     requestId: string,
   ) => Promise<HostPreparedProjectWorkspace>;
   cancelProjectPreparation?: (windowId: number, requestId: string) => void;
-  reportRemoteUsageEvent?: (windowId: number, event: TelemetryEventPayload) => void;
-  reportRendererTelemetryEvent?: (event: RendererTelemetryEventPayload) => void;
   onStatusChanged?: (windowId: number, status: WebRemoteControlStatus) => void;
   attachWorkspaceHost: (
     windowId: number,
@@ -348,46 +341,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
     shardTimeoutMs: dependencies.mobileLogPullShardTimeoutMs,
   });
 
-  function reportRemoteUsageEvent(windowId: number, event: TelemetryEventPayload): void {
-    try {
-      dependencies.reportRemoteUsageEvent?.(windowId, event);
-    } catch (error) {
-      // 埋点是旁路能力，任何异常都不能改变远控配对和 bridge 的业务结果。
-      dependencies.logger.warn("[web-remote-control] remote usage telemetry failed", {
-        elementName: event.elementName,
-        error,
-      });
-    }
-  }
-
-  function resolveRemoteKind(
-    target: WebRemoteControlWorkspaceTarget,
-    acquired?: WebRemoteControlHostAttachmentHandle,
-  ): RemoteUsageRemoteKind | undefined {
-    if (target.kind !== "remote") {
-      return undefined;
-    }
-    return (
-      acquired?.remoteKind ??
-      (target.workspaceIdentity
-        ? parseRemoteWorkspaceIdentity(target.workspaceIdentity)?.kind
-        : undefined)
-    );
-  }
-
-  function resolveRuntimeWorkspaceDimensions(runtime: WindowControlRuntime): {
-    workspaceKind: "local" | "remote";
-    remoteKind?: RemoteUsageRemoteKind;
-  } {
-    const remoteKind = runtime.workspaceIdentity
-      ? parseRemoteWorkspaceIdentity(runtime.workspaceIdentity)?.kind
-      : undefined;
-    return {
-      workspaceKind:
-        runtime.workspaceIdentity?.trim() || runtime.remoteSessionId ? "remote" : "local",
-      remoteKind,
-    };
-  }
   /**
    * Bugfix: 401 只否定发起请求时用的 JWT。旧实现直接把在途旧 JWT 的 401 当成当前登录失效，
    * 同账号刚重新登录（signed-in 已处理完）后旧请求才返回，远控就停在 auth-required，需要第二次登录通知。
@@ -1358,28 +1311,9 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
       dependencies.logger.info(
         `[web-remote-control] workspace bridge active window=${runtime.windowId} session=${runtime.deviceSid} bridgeSession=${request.bridgeSessionId}`,
       );
-      reportRemoteUsageEvent(
-        runtime.windowId,
-        buildWebRemoteControlBridgeResultTelemetry({
-          result: "success",
-          workspaceKind: target.kind,
-          remoteKind: resolveRemoteKind(target, acquired),
-          entryKind: request.taskId ? "task" : "home",
-        }),
-      );
 
       return toExternalBridge(bridgeRuntime);
     } catch (error) {
-      reportRemoteUsageEvent(
-        runtime.windowId,
-        buildWebRemoteControlBridgeResultTelemetry({
-          result: "failure",
-          workspaceKind: target.kind,
-          remoteKind: resolveRemoteKind(target, acquired),
-          entryKind: request.taskId ? "task" : "home",
-          errorCategory: classifyRemoteUsageError(error),
-        }),
-      );
       if (acquired) {
         dependencies.releaseWorkspaceHostAttachment(acquired.attachmentId);
       }
@@ -1613,10 +1547,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
       case "rpc-frame-ack":
         routeRpcTransportPayload(runtime, payload);
         break;
-      case "telemetry-report":
-        // 手机已在创建边界构造事件；Main 只转发，不维护会话事实或干预 replayable 链路。
-        dependencies.reportRendererTelemetryEvent?.(payload.event);
-        break;
       case "mobile-diagnostic":
         logMobileDiagnostic(runtime, payload);
         break;
@@ -1737,15 +1667,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
     }
     if (state === "paired") {
       if (previousTransportState !== "paired") {
-        const workspaceDimensions = resolveRuntimeWorkspaceDimensions(runtime);
-        reportRemoteUsageEvent(
-          runtime.windowId,
-          buildWebRemoteControlPairResultTelemetry({
-            result: "success",
-            pairKind: runtime.hasEverPaired ? "reconnect" : "initial",
-            ...workspaceDimensions,
-          }),
-        );
       }
       runtime.hasEverPaired = true;
       clearMobileDisconnectGraceTimer(runtime);
@@ -1761,16 +1682,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
     }
     if (state === "kicked") {
       if (previousTransportState !== "kicked") {
-        const workspaceDimensions = resolveRuntimeWorkspaceDimensions(runtime);
-        reportRemoteUsageEvent(
-          runtime.windowId,
-          buildWebRemoteControlPairResultTelemetry({
-            result: "failure",
-            pairKind: runtime.hasEverPaired ? "reconnect" : "initial",
-            ...workspaceDimensions,
-            errorCategory: "relay",
-          }),
-        );
       }
       preserveWindowRuntimeFailure(
         runtime.windowId,
@@ -1782,16 +1693,6 @@ export function createWebRemoteControlManager(dependencies: WebRemoteControlMana
     }
     if (state === "error") {
       if (previousTransportState !== "error") {
-        const workspaceDimensions = resolveRuntimeWorkspaceDimensions(runtime);
-        reportRemoteUsageEvent(
-          runtime.windowId,
-          buildWebRemoteControlPairResultTelemetry({
-            result: "failure",
-            pairKind: runtime.hasEverPaired ? "reconnect" : "initial",
-            ...workspaceDimensions,
-            errorCategory: "relay",
-          }),
-        );
       }
       runtime.status = "error";
       emitRuntimeStatus(runtime);

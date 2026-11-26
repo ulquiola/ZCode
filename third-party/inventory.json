@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "inputHashEncoding": "UTF-8 with CRLF normalized to LF; notice and source snapshot hashes remain byte-exact",
   "scope": "Production dependency union across current workspace projects, copied source/assets and native tools; not a per-installer SBOM or a certification of all licensing obligations.",
-  "noticesSha256": "04cbc4bd3801cb12adb878eb28272595833de3e4c33dedfd77c6e99454f308ae",
+  "noticesSha256": "6467f75b873da4fcb1d921180641deb5b014ea7326b7b85484bb1a74ef866cc1",
   "inputs": {
     ".agents/skills/agent-browser/references/authentication.md": "e2c3b0f4a1dc1368dee821f03c000d818a48421d09f3872525dddffe73f2112b",
     ".agents/skills/agent-browser/references/commands.md": "17522fc56d742663f47231ff06c4811abc87e12c7f78e11f94d253ddd540a909",
@@ -227,7 +227,7 @@
     "apps/zcode-cli/package.json": "48becb8f625fe395c4d7f25086803f1d2b71a3f43c87f08678632ab98e321f30",
     "apps/zcode-cli/packages/adapters/package.json": "a3f7cabaeb57c46fe41fdd394e8fbe5395be622dcbce27a453d717a9408bc855",
     "apps/zcode-cli/packages/android-emulator-plugin/package.json": "d18ceacb2513b17f41140e2265493f59ff28d0343b4c30e402691992bbd54b75",
-    "apps/zcode-cli/packages/bootstrap/package.json": "a0da69b687838f706b796b1831c6d158634359aedaeb727d415015dc1a2e0399",
+    "apps/zcode-cli/packages/bootstrap/package.json": "d5481405bab807a98dc05b677e3958bee094cfe8ad31f71cb2c241c88afea350",
     "apps/zcode-cli/packages/browser-use-plugin/package.json": "ff3b9ff91d43c29835917477eaacbf7fa0062cd492fea4259d0fb267bd3a3541",
     "apps/zcode-cli/packages/cli/package.json": "601f1a441be35fee79ae6611c8c76f7d0bce9203e408c23b560ff8b46b8c6e89",
     "apps/zcode-cli/packages/contracts/package.json": "9b6fd0e70dc2a1acb965e66b60f4a5e7eb2e7dadd348f7d67b2bb5a22d796634",
@@ -614,7 +614,6 @@
     "apps/zcode-cli/packages/superpowers-plugin/LICENSE": "a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400",
     "apps/zcode-cli/packages/superpowers-plugin/package.json": "003495dd8441f4a9b017931e081770a157fa48b895752d0cfe7487d437507685",
     "apps/zcode-cli/packages/swift-bridge/package.json": "958674fcd44c789564ee672b0e6c687f1f900f4286174280700ddfb442d23906",
-    "apps/zcode-cli/packages/telemetry/package.json": "2c7efa1d5b42700400b971fff61314c7277f5e05b5f96f48b7d50c9ccf11772e",
     "apps/zcode-cli/packages/tui/package.json": "303b8c2f0eb3f8ea0476935f452dd0d2c620ac52587ebb08b24a193f3e3658e0",
     "apps/zcode-cli/packages/visualize-plugin/package.json": "32b89b852c2e0dd9d83cde0f56da71252d1e74df942cd83dbbc28f840e4b1b33",
     "apps/zcode-cli/packages/zcode-cua-plugin/package.json": "bced1ac1f3120aac8c8c5d07a6986917aaf68de6378ad9f483143d43da5611db",
@@ -796,10 +795,10 @@
     "docs/knip/docs/src/styles/theme-light.css": "e2e85900fd43b5b563f56b9ce7e2a09f07d7420a78e80f0133efffeb8fce2aa0",
     "docs/knip/docs/src/util/post.ts": "6d7c45bd29035a73f1b67d24524760c7e317f367d32216de2c9a240dda7a40d1",
     "docs/knip/docs/tsconfig.json": "662b1f10a5e572b49a45669e4be9ee46c22f987dcf277c204948777b367df1cd",
-    "package.json": "fd92975dad5c18e2018871b4868195eeb2704a1e2f106302c24c9a59017c94a3",
+    "package.json": "a86b2f5b7b6bcc2eb203a5b72a48981f927db3eab9f8ed43cdc0ebbaf2882dea",
     "packages/client/package.json": "e76f441549130dc3e5e68072a36b6cb9044e19a6625f1e813f19a4def2b1b689",
     "packages/design-runtime/package.json": "647d36a7bb3b5b13f87ddb8a94811152a1a024f0293eebd0b16032e1c0976d9c",
-    "packages/desktop/package.json": "b8450de7a149c8e45995744fd7b37bb0d07a0178d546c3ece1bcd30f91387f50",
+    "packages/desktop/package.json": "863fd2f2b7b34ac15a5d817b6d3d575fb859f66a319ff2a906d47d6cf4222620",
     "packages/desktop/src/renderer/public/material-icons/3d.svg": "9527b849f0fba57ca7640e2717b3a19cb5f5e046712cbbd8b75d73af338c68fb",
     "packages/desktop/src/renderer/public/material-icons/abap.svg": "1335bd7eb9a0ed49deb622330d680c2e97731726a7a5eee8e4f46dc1e5db4de4",
     "packages/desktop/src/renderer/public/material-icons/abc.svg": "d1a68020e8f020ef29dca5f94dc8613b7ae8fb5b212d8b1cc23b0f975ac7acda",
@@ -1977,7 +1976,7 @@
     "packages/services/package.json": "5d96b013c7a80ec8d5a928e36532ce4e3b1fda61460fb45727b82f1407f0e6d4",
     "packages/session-control/package.json": "abe4e64b8ceebb9fa9240e6c88d2b9f5bfa55fc15733f70a51b7502294aef8f3",
     "packages/share-ui/package.json": "bf4e08759bc010d24d2559aa82a538832bee7c749c07c230158ee8d810cfdf41",
-    "packages/shared/package.json": "fba2e4c4a0719b1c6b5fdd86d94d11a7cf2420bda598369c304ad7c438b7bc86",
+    "packages/shared/package.json": "9d4ba8a4191e33380e0066ccbb009c4204190273d19822287f6a329b80da16c7",
     "packages/shared/src/zcode-protocol-v4/wire-codec.ts": "ac2494a3acc795c809c94ee9393f50271a9c2a0fd33813459e5ab93842ceef75",
     "packages/stream-animate/package.json": "31cb25ed87e64dbcd695bbc932729ac30499107d45f747b96a5c3de832afdc28",
     "packages/ui/package.json": "53fc211a75d724c1bc3771a5c265e388907d5512fc9bf821c396511b8f42e59e",
@@ -3247,13 +3246,12 @@
     "patches/@ai-sdk__anthropic@3.0.81.patch": "d3a7c381eba7f5157f765a0528003af17cf84544911dfb7412c7800168e01c18",
     "patches/@ai-sdk__openai-compatible@2.0.60.patch": "9632fe9d821b3dc20939ae509cc35b968d90d018bbd1d812390718898182a38b",
     "patches/@aiden0z__pptx-renderer@1.2.4.patch": "e1a90a724324c45a2cc90cf84d1ae1f35755b8fc9438a208d610960bd0d5f65a",
-    "patches/@arms__rum-electron@0.0.3.patch": "36855354851ea495bc47a03340b0484ff62836b739cad56904b8a69f18e2ae97",
     "patches/@extend-ai__react-xlsx@0.16.0.patch": "b2fc5fcfa1aab1271d20fd539d2a367f06aac08a191425885cf8f1125b7c6bc8",
     "patches/@radix-ui__react-collapsible@1.1.12.patch": "4b7b3781f603e111bb33aef9c4b1694ac9bacd3dff47692606de9876d4631164",
     "patches/@radix-ui__react-menu@2.1.16.patch": "4b05eae73074149ac453ee047d9f48707df7d5c9ddedeab8d514f9b9fa097a6c",
     "patches/vitest@4.1.7.patch": "11fdb66aa985e1d77e68752deeb7c1130ae33c9a4e2968f23aae8adaf8bc9ba0",
     "patches/wdio-electron-service@9.2.1.patch": "52481dae5e76772fcb8c2a9ff42feb3d0e1478e28815a4b975c81b9287e3385f",
-    "pnpm-lock.yaml": "6a02982c16704bb0a010f14e615361b63c19210a59554c88a5f657cffd0197d5",
+    "pnpm-lock.yaml": "dcaaf2d277cf955d011bfe844d1e28f5b8a8ad512fc11c01199e1b4b8e7b72d3",
     "pnpm-workspace.yaml": "ddf4d195a433a1fae0a991462b9b19281435d7055d768d2a2942de8f4aff89f3",
     "scripts/license-texts/Apache-2.0.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "scripts/native-search-tools-config.mjs": "7cadab538877a3f64a3161f1c64ec50fe06c83aa32dbebef3553941c314a689a",
@@ -3375,7 +3373,7 @@
     "third-party/native-search/licenses/f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af.txt": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
     "third-party/native-search/licenses/f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505.txt": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505",
     "third-party/native-search/sources.json": "3ed43433e5a4c684c0d751bc03facc3f020d5077d8ffd299156a54b51a1ec6d9",
-    "third-party/npm-overrides.json": "5ecbdef54fcee5f03cf1eb825153fee2af3dc1e74e0c3b686e0b37bad2f77c5c",
+    "third-party/npm-overrides.json": "d77e35186db1437b61a5f362680be9c4d0292a6038183e680b0cac883d5f7ced",
     "third-party/runtime/node-22.16.0-LICENSE.txt": "1ae62e2015784ba438db7b04ebd33f3c4ff3efdb824c111c4ececd99945fd52d",
     "third-party/runtime/node-24.14.0-LICENSE.txt": "4573185d56580da2b890ba34a85a409257640f1c5632eade4300137266194d18",
     "third-party/runtime/sources.json": "b27bc8d81aeb71108e523602364ffbb6a1b19c2d5d47733fd43094b769006741",
@@ -3394,14 +3392,11 @@
     "third-party/upstream/268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5.txt": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5",
     "third-party/upstream/2711a8b5a5cdfef0e639f96c1aca12ae23d7d64a02d0507f1bdf14d2b27bbc3a.txt": "2711a8b5a5cdfef0e639f96c1aca12ae23d7d64a02d0507f1bdf14d2b27bbc3a",
     "third-party/upstream/2c88816684a40c718113a10062a8335b665cec00d3c7b32e2b3fe9c620a3e03e.txt": "2c88816684a40c718113a10062a8335b665cec00d3c7b32e2b3fe9c620a3e03e",
-    "third-party/upstream/2c976d327b293bd74c257cd53e9b4ecef97a06b1651baa3b24327c97192cb3de.txt": "2c976d327b293bd74c257cd53e9b4ecef97a06b1651baa3b24327c97192cb3de",
     "third-party/upstream/2d2349188616c4b64ceeae33e1386bb546b0658864b4f7f8c9785757cb065b5d.txt": "2d2349188616c4b64ceeae33e1386bb546b0658864b4f7f8c9785757cb065b5d",
     "third-party/upstream/3007cd45c9afdf93812c0c8a7643ea32a7db0b24e495dc0f2312c8a43990b0dd.txt": "3007cd45c9afdf93812c0c8a7643ea32a7db0b24e495dc0f2312c8a43990b0dd",
     "third-party/upstream/31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87.txt": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87",
-    "third-party/upstream/328eb7864c20ab77607b26ee1913b65a9b880f6300eea9e667b890da896a2f40.txt": "328eb7864c20ab77607b26ee1913b65a9b880f6300eea9e667b890da896a2f40",
     "third-party/upstream/34dee5fd5e5cc756efb5ad4d64652bce719bdf5e900ca5d7538253e737930bc4.txt": "34dee5fd5e5cc756efb5ad4d64652bce719bdf5e900ca5d7538253e737930bc4",
     "third-party/upstream/37398454f23ddeb02f0b81113fef9ebdc4571b7297cb6e18376c1ccb9bb1453e.txt": "37398454f23ddeb02f0b81113fef9ebdc4571b7297cb6e18376c1ccb9bb1453e",
-    "third-party/upstream/38b6f63a0aa422b5c329e75f1aeecd2b02e83caab1747644c00810870d77bacb.txt": "38b6f63a0aa422b5c329e75f1aeecd2b02e83caab1747644c00810870d77bacb",
     "third-party/upstream/3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94.txt": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94",
     "third-party/upstream/417fa227d75b1e22a15d8389ca8b5e8b7b86241c3b1b17288d20523016ef6fa6.txt": "417fa227d75b1e22a15d8389ca8b5e8b7b86241c3b1b17288d20523016ef6fa6",
     "third-party/upstream/43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1.txt": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
@@ -3453,11 +3448,9 @@
     "third-party/upstream/cf81859d85e99ff2fad83d51d9dfd85ca5189b23c4442aacf1890c54665d92f4.txt": "cf81859d85e99ff2fad83d51d9dfd85ca5189b23c4442aacf1890c54665d92f4",
     "third-party/upstream/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "third-party/upstream/d65ff929f8a373ea16b21d45d5489557d51389ba6583a5c9959d5487c02ce965.txt": "d65ff929f8a373ea16b21d45d5489557d51389ba6583a5c9959d5487c02ce965",
-    "third-party/upstream/d8a3a14c4ea44385e299f072db9e8a73994e2ff2b344ea5ae5a39c09f11cc984.txt": "d8a3a14c4ea44385e299f072db9e8a73994e2ff2b344ea5ae5a39c09f11cc984",
     "third-party/upstream/da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93.txt": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "third-party/upstream/e1cfcc55c325b3f78cf55df9664abaa066e2271dffe8213347d9fccdfbac8f2c.txt": "e1cfcc55c325b3f78cf55df9664abaa066e2271dffe8213347d9fccdfbac8f2c",
     "third-party/upstream/e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c.txt": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c",
-    "third-party/upstream/e49e62397b603438476e0d6b5ca3b6e6d4f23a80594e596aff29ac04fa3e1b1c.txt": "e49e62397b603438476e0d6b5ca3b6e6d4f23a80594e596aff29ac04fa3e1b1c",
     "third-party/upstream/e56fbb5b3d95756f3fa1cfefa24732ec79f18ece1ad08a4e79e00df57e8b198c.txt": "e56fbb5b3d95756f3fa1cfefa24732ec79f18ece1ad08a4e79e00df57e8b198c",
     "third-party/upstream/ebb2e920800c6353474e3e23d84f714ee8aaecd8f5a71851aa03594a4129d855.txt": "ebb2e920800c6353474e3e23d84f714ee8aaecd8f5a71851aa03594a4129d855",
     "third-party/upstream/f158b3bd10b867740fdbf81447216f1f8685473acf61e6a105ef91ba9fe8ebc3.txt": "f158b3bd10b867740fdbf81447216f1f8685473acf61e6a105ef91ba9fe8ebc3",
@@ -3656,39 +3649,6 @@
         {
           "member": "README.md (license section)",
           "sha256": "6209542eca0c56db0322ad9a8f307b85b8fad89ce601810e00987d4a94e55738"
-        }
-      ]
-    },
-    {
-      "name": "@arms/rum-browser",
-      "version": "0.1.8",
-      "license": "ISC",
-      "notices": [
-        {
-          "member": "https://registry.npmjs.org/%40arms%2frum-browser%400.1.8",
-          "sha256": "2c976d327b293bd74c257cd53e9b4ecef97a06b1651baa3b24327c97192cb3de"
-        }
-      ]
-    },
-    {
-      "name": "@arms/rum-core",
-      "version": "0.1.4",
-      "license": "ISC",
-      "notices": [
-        {
-          "member": "https://registry.npmjs.org/%40arms%2frum-core%400.1.4",
-          "sha256": "328eb7864c20ab77607b26ee1913b65a9b880f6300eea9e667b890da896a2f40"
-        }
-      ]
-    },
-    {
-      "name": "@arms/rum-electron",
-      "version": "0.0.3",
-      "license": "MIT",
-      "notices": [
-        {
-          "member": "https://registry.npmjs.org/%40arms%2frum-electron%400.0.3",
-          "sha256": "38b6f63a0aa422b5c329e75f1aeecd2b02e83caab1747644c00810870d77bacb"
         }
       ]
     },
@@ -4369,34 +4329,6 @@
         {
           "member": "README.md (license section)",
           "sha256": "24601581852c22ee64603c980589723298f3a10fe52e1279bec400f7fd9a4d22"
-        }
-      ]
-    },
-    {
-      "name": "@electron-internal/extract-zip",
-      "version": "1.0.5",
-      "license": "BSD-2-Clause",
-      "repository": "https://github.com/electron/extract-zip",
-      "notices": [
-        {
-          "member": "README.md (license section)",
-          "sha256": "f64eca06693734626fe5c515ef365ef2e55aedb204c4dfd672a4832f9d8a4fc1"
-        },
-        {
-          "member": "https://registry.npmjs.org/@electron-internal%2fextract-zip/1.0.5",
-          "sha256": "d8a3a14c4ea44385e299f072db9e8a73994e2ff2b344ea5ae5a39c09f11cc984"
-        }
-      ]
-    },
-    {
-      "name": "@electron/get",
-      "version": "5.1.0",
-      "license": "MIT",
-      "repository": "https://github.com/electron/get",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "edab8abb78d9c5b36944c3e00aebf6a90eb32378993f49ac8a3904007029c629"
         }
       ]
     },
@@ -5963,22 +5895,6 @@
       ]
     },
     {
-      "name": "@opentelemetry/api-logs",
-      "version": "0.214.0",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "bd58f2a90815dfc0589075fab5af424dedc7415266765f48ae59b3de98d5e1be"
-        }
-      ]
-    },
-    {
       "name": "@opentelemetry/api",
       "version": "1.9.0",
       "license": "Apache-2.0",
@@ -5991,214 +5907,6 @@
         {
           "member": "README.md (license section)",
           "sha256": "9cfa86899ccd67b76331431bbff57cbe15ceabb2e393aeb5a56c7a958dabd595"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/api",
-      "version": "1.9.1",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "9cfa86899ccd67b76331431bbff57cbe15ceabb2e393aeb5a56c7a958dabd595"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/context-async-hooks",
-      "version": "2.6.1",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "fc58ccbf60cdd4a212be673e7f1278dd1a3e49f1b1ddc21a7d70724bc8b3044a"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/core",
-      "version": "2.6.1",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "998b885208a7e72f854bca1a9fcb439c7665671dcbc77a9b6ca5fae5a15982dc"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/exporter-metrics-otlp-http",
-      "version": "0.214.0",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "f60c6f5ed7777891fdb00c840a9328db068f279da72aee211f1648d28a93be36"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/exporter-metrics-otlp-proto",
-      "version": "0.214.0",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "1b28b52d5dc4fa05b087ba53e75f1f95c11731ed07218fcdc992ad8bcddd93e1"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/exporter-trace-otlp-proto",
-      "version": "0.214.0",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "e1acb133327575513e723320b5c42d7705bfe95dfdf0da1879239824ec5f8496"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/otlp-exporter-base",
-      "version": "0.214.0",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "0b8732770b293090db6e4ec732b98a2b3b199c927dfafcbc23e51c5b724306b7"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/otlp-transformer",
-      "version": "0.214.0",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "df4b0aa1ded638f520ed7ca841161c27677d0678671e98ffc02917fdb0c0ff3b"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/resources",
-      "version": "2.6.1",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "9cb96eeeccf177dd2579c21e2376f52ce4fa90861cc2dda9f14842542da7a3f9"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/sdk-logs",
-      "version": "0.214.0",
-      "license": "Apache-2.0",
-      "repository": "git+https://github.com/open-telemetry/opentelemetry-js.git",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "a194d66e0c5bd6dc8927f5806bd9c5fd1df7c582eb8518d980a612cee902d632"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/sdk-metrics",
-      "version": "2.6.1",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "1c6a18bba0437d60bb18fa58bf055eb32c51c791837ac0ad375b529bcf245f94"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/sdk-trace-base",
-      "version": "2.6.1",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "8375f12da0f472679e1eeee52bf58ea289c9806b8a7605f80a1f8865b01908f1"
-        }
-      ]
-    },
-    {
-      "name": "@opentelemetry/semantic-conventions",
-      "version": "1.43.0",
-      "license": "Apache-2.0",
-      "repository": "open-telemetry/opentelemetry-js",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "ac32ccc44843f58e28c56d475e1e8687a3eeae4aa003c9225b40e9603b5f9c73"
         }
       ]
     },
@@ -7142,30 +6850,6 @@
       ]
     },
     {
-      "name": "@rrweb/types",
-      "version": "2.0.0",
-      "license": "MIT",
-      "repository": "git+https://github.com/rrweb-io/rrweb.git",
-      "notices": [
-        {
-          "member": "https://raw.githubusercontent.com/rrweb-io/rrweb/%40rrweb%2Ftypes%402.0.0/LICENSE",
-          "sha256": "e49e62397b603438476e0d6b5ca3b6e6d4f23a80594e596aff29ac04fa3e1b1c"
-        }
-      ]
-    },
-    {
-      "name": "@rrweb/utils",
-      "version": "2.0.0",
-      "license": "MIT",
-      "repository": "git+https://github.com/rrweb-io/rrweb.git",
-      "notices": [
-        {
-          "member": "https://raw.githubusercontent.com/rrweb-io/rrweb/%40rrweb%2Futils%402.0.0/LICENSE",
-          "sha256": "e49e62397b603438476e0d6b5ca3b6e6d4f23a80594e596aff29ac04fa3e1b1c"
-        }
-      ]
-    },
-    {
       "name": "@sec-ant/readable-stream",
       "version": "0.4.1",
       "license": "MIT",
@@ -7734,18 +7418,6 @@
       ]
     },
     {
-      "name": "@types/css-font-loading-module",
-      "version": "0.0.7",
-      "license": "MIT",
-      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
-        }
-      ]
-    },
-    {
       "name": "@types/d3-array",
       "version": "3.2.2",
       "license": "MIT",
@@ -8239,18 +7911,6 @@
     },
     {
       "name": "@types/node",
-      "version": "24.12.2",
-      "license": "MIT",
-      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
-        }
-      ]
-    },
-    {
-      "name": "@types/node",
       "version": "25.6.0",
       "license": "MIT",
       "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
@@ -8442,18 +8102,6 @@
         {
           "member": "LICENSE",
           "sha256": "b070d77bfb2c52a1dd6996de0ce5f64c49a0ca55c889b163a963ddf5cb001ee2"
-        }
-      ]
-    },
-    {
-      "name": "@xstate/fsm",
-      "version": "1.6.5",
-      "license": "MIT",
-      "repository": "git+ssh://git@github.com/statelyai/xstate.git",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "542d926d7bbb099785e322d1d5574c539d51942e52ec8adce2be4629ba81fc7f"
         }
       ]
     },
@@ -8922,22 +8570,6 @@
         {
           "member": "LICENSE.md",
           "sha256": "d408f38ffa3355c5faec517153295338892eb0f1ea43f57874bb23c6075979b5"
-        }
-      ]
-    },
-    {
-      "name": "base64-arraybuffer",
-      "version": "1.0.2",
-      "license": "MIT",
-      "repository": "https://github.com/niklasvh/base64-arraybuffer",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "f3eca6ff762533fa5a77caf954a143e48afa204668cf97dce758c45a9e006be3"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "62235643db61d20e8e4c58d160e906fc168941207adbc96a80ba87b491570067"
         }
       ]
     },
@@ -10990,22 +10622,6 @@
       ]
     },
     {
-      "name": "electron",
-      "version": "44.7.0",
-      "license": "MIT",
-      "repository": "https://github.com/electron/electron",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "56a37896ff6edec2b75b41465b66dd768f2d294c315255164898ca3e685bbd30"
-        }
-      ]
-    },
-    {
       "name": "elkjs",
       "version": "0.12.0",
       "license": "EPL-2.0 OR GPL-3.0-or-later",
@@ -11162,18 +10778,6 @@
         {
           "member": "license",
           "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
-        }
-      ]
-    },
-    {
-      "name": "env-paths",
-      "version": "3.0.0",
-      "license": "MIT",
-      "repository": "sindresorhus/env-paths",
-      "notices": [
-        {
-          "member": "license",
-          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
         }
       ]
     },
@@ -14914,22 +14518,6 @@
       ]
     },
     {
-      "name": "mitt",
-      "version": "3.0.1",
-      "license": "MIT",
-      "repository": "developit/mitt",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "1cab22f196264195a4caec8ca5630170fdde76ee8f43346e47021d087332d3b0"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "23f29ca7271409b35761a333311e24dd1dc6b62bea91fd7c80b2bc753f3b1b8f"
-        }
-      ]
-    },
-    {
       "name": "mkdirp",
       "version": "1.0.4",
       "license": "MIT",
@@ -16162,22 +15750,6 @@
       ]
     },
     {
-      "name": "progress",
-      "version": "2.0.3",
-      "license": "MIT",
-      "repository": "git://github.com/visionmedia/node-progress",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "d7d2a7786de7c7cfd96f920c6f12927d74e1d2a861ca4498bf465c3bc3f4c21c"
-        },
-        {
-          "member": "Readme.md (license section)",
-          "sha256": "daf005969aac8cb4283b3777361f0244f4cce898b9a983a60b7f0d9e96f559bf"
-        }
-      ]
-    },
-    {
       "name": "prompts",
       "version": "2.4.2",
       "license": "MIT",
@@ -17146,42 +16718,6 @@
       ]
     },
     {
-      "name": "rrdom",
-      "version": "2.0.0",
-      "license": "MIT",
-      "repository": "git+https://github.com/rrweb-io/rrweb.git",
-      "notices": [
-        {
-          "member": "https://raw.githubusercontent.com/rrweb-io/rrweb/rrdom%402.0.0/LICENSE",
-          "sha256": "e49e62397b603438476e0d6b5ca3b6e6d4f23a80594e596aff29ac04fa3e1b1c"
-        }
-      ]
-    },
-    {
-      "name": "rrweb-snapshot",
-      "version": "2.0.0",
-      "license": "MIT",
-      "repository": "git+https://github.com/rrweb-io/rrweb.git",
-      "notices": [
-        {
-          "member": "https://raw.githubusercontent.com/rrweb-io/rrweb/rrweb-snapshot%402.0.0/LICENSE",
-          "sha256": "e49e62397b603438476e0d6b5ca3b6e6d4f23a80594e596aff29ac04fa3e1b1c"
-        }
-      ]
-    },
-    {
-      "name": "rrweb",
-      "version": "2.0.0",
-      "license": "MIT",
-      "repository": "git+ssh://git@github.com/rrweb-io/rrweb.git",
-      "notices": [
-        {
-          "member": "https://raw.githubusercontent.com/rrweb-io/rrweb/rrweb%402.0.0/LICENSE",
-          "sha256": "e49e62397b603438476e0d6b5ca3b6e6d4f23a80594e596aff29ac04fa3e1b1c"
-        }
-      ]
-    },
-    {
       "name": "run-applescript",
       "version": "7.1.0",
       "license": "MIT",
@@ -17966,18 +17502,6 @@
       ]
     },
     {
-      "name": "sumchecker",
-      "version": "3.0.1",
-      "license": "Apache-2.0",
-      "repository": "git+https://github.com/malept/sumchecker.git",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
-        }
-      ]
-    },
-    {
       "name": "supports-color",
       "version": "8.1.1",
       "license": "MIT",
@@ -18474,18 +17998,6 @@
         {
           "member": "README.md (license section)",
           "sha256": "d274cc11a7f8b98caff978f6b5acdfd72de3ba6a2c3c20ea3bd984fcde194201"
-        }
-      ]
-    },
-    {
-      "name": "undici-types",
-      "version": "7.16.0",
-      "license": "MIT",
-      "repository": "git+https://github.com/nodejs/undici.git",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
         }
       ]
     },
@@ -19230,22 +18742,6 @@
         {
           "member": "LICENSE",
           "sha256": "5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147"
-        }
-      ]
-    },
-    {
-      "name": "web-vitals",
-      "version": "3.5.2",
-      "license": "Apache-2.0",
-      "repository": "https://github.com/GoogleChrome/web-vitals.git",
-      "notices": [
-        {
-          "member": "LICENSE",
-          "sha256": "bfdeded4040e05da31ca9b6239dc83bd23fa26ac8db87342a7ca4363f68916ff"
-        },
-        {
-          "member": "README.md (license section)",
-          "sha256": "43aaa4efe24cac3b61a9626d2ec1316b634457f90919fff757c299c090d6595f"
         }
       ]
     },
@@ -33746,11 +33242,6 @@
       "sha256": "52481dae5e76772fcb8c2a9ff42feb3d0e1478e28815a4b975c81b9287e3385f"
     },
     {
-      "package": "@arms/rum-electron@0.0.3",
-      "file": "patches/@arms__rum-electron@0.0.3.patch",
-      "sha256": "36855354851ea495bc47a03340b0484ff62836b739cad56904b8a69f18e2ae97"
-    },
-    {
       "package": "@ai-sdk/openai-compatible@2.0.60",
       "file": "patches/@ai-sdk__openai-compatible@2.0.60.patch",
       "sha256": "9632fe9d821b3dc20939ae509cc35b968d90d018bbd1d812390718898182a38b"
@@ -33995,50 +33486,6 @@
         "npmArchiveSha256": "e06fc6be19323cf447f0058975cfcf41923d3422ea613cff2e67d8fd8ee1d655",
         "sourceRevision": "145140971e9d83ccac32265f24b1c55dea437896",
         "sourceTreeUrl": "https://api.github.com/repos/nteract/ansi-to-react/git/trees/145140971e9d83ccac32265f24b1c55dea437896?recursive=1",
-        "upstreamLicenseFiles": []
-      }
-    },
-    {
-      "package": "@arms/rum-browser@0.1.8",
-      "file": "third-party/upstream/2c976d327b293bd74c257cd53e9b4ecef97a06b1651baa3b24327c97192cb3de.txt",
-      "sha256": "2c976d327b293bd74c257cd53e9b4ecef97a06b1651baa3b24327c97192cb3de",
-      "source": "https://registry.npmjs.org/%40arms%2frum-browser%400.1.8",
-      "evidenceKind": "publisher-license-identifier-and-standard-terms",
-      "license": "ISC"
-    },
-    {
-      "package": "@arms/rum-core@0.1.4",
-      "file": "third-party/upstream/328eb7864c20ab77607b26ee1913b65a9b880f6300eea9e667b890da896a2f40.txt",
-      "sha256": "328eb7864c20ab77607b26ee1913b65a9b880f6300eea9e667b890da896a2f40",
-      "source": "https://registry.npmjs.org/%40arms%2frum-core%400.1.4",
-      "evidenceKind": "publisher-license-identifier-and-standard-terms",
-      "license": "ISC"
-    },
-    {
-      "package": "@arms/rum-electron@0.0.3",
-      "file": "third-party/upstream/38b6f63a0aa422b5c329e75f1aeecd2b02e83caab1747644c00810870d77bacb.txt",
-      "sha256": "38b6f63a0aa422b5c329e75f1aeecd2b02e83caab1747644c00810870d77bacb",
-      "source": "https://registry.npmjs.org/%40arms%2frum-electron%400.0.3",
-      "evidenceKind": "publisher-license-identifier-and-standard-terms",
-      "license": "MIT"
-    },
-    {
-      "package": "@electron-internal/extract-zip@1.0.5",
-      "repo": "electron/extract-zip",
-      "refs": [
-        "b83e459fd04c53b0a1c8438a6792df8f64be47fc"
-      ],
-      "file": "third-party/upstream/d8a3a14c4ea44385e299f072db9e8a73994e2ff2b344ea5ae5a39c09f11cc984.txt",
-      "sha256": "d8a3a14c4ea44385e299f072db9e8a73994e2ff2b344ea5ae5a39c09f11cc984",
-      "source": "https://registry.npmjs.org/@electron-internal%2fextract-zip/1.0.5",
-      "evidenceKind": "publisher-license-identifier-and-standard-terms",
-      "license": "BSD-2-Clause",
-      "reviewEvidence": {
-        "checkedOn": "2026-10-20",
-        "result": "The versioned npm archive and exact gitHead source tree contain no standalone LICENSE or copyright notice. The publisher BSD-2-Clause identifier and fixed SPDX standard terms are preserved; upstream authorization/copyright material is still required to close this review.",
-        "npmArchiveSha256": "939b4462974f8fa1b339dd4f420c62787ddf06903cc9c61f1f0661f096f5370b",
-        "sourceRevision": "b83e459fd04c53b0a1c8438a6792df8f64be47fc",
-        "sourceTreeUrl": "https://api.github.com/repos/electron/extract-zip/git/trees/b83e459fd04c53b0a1c8438a6792df8f64be47fc?recursive=1",
         "upstreamLicenseFiles": []
       }
     }
@@ -34355,22 +33802,6 @@
     },
     {
       "id": "ansi-to-react@6.2.6",
-      "reason": "Original version-specific publisher copyright/license material remains incomplete."
-    },
-    {
-      "id": "@arms/rum-browser@0.1.8",
-      "reason": "Original version-specific publisher copyright/license material remains incomplete."
-    },
-    {
-      "id": "@arms/rum-core@0.1.4",
-      "reason": "Original version-specific publisher copyright/license material remains incomplete."
-    },
-    {
-      "id": "@arms/rum-electron@0.0.3",
-      "reason": "Original version-specific publisher copyright/license material remains incomplete."
-    },
-    {
-      "id": "@electron-internal/extract-zip@1.0.5",
       "reason": "Original version-specific publisher copyright/license material remains incomplete."
     },
     {

@@ -987,10 +987,6 @@ export function createZCodeAgentConnectionScope(
       if (disposed || role !== "trusted-host-relay") return RpcEvent.None;
       return base.onDynamicMcpResourceSamples();
     },
-    onDynamicRemoteConversationTelemetry() {
-      if (disposed || role !== "trusted-host-relay") return RpcEvent.None;
-      return base.onDynamicRemoteConversationTelemetry();
-    },
     onDynamicMcpTelemetry() {
       assertOpen();
       // MCP 遥测与 CLI 资源样本共用可信 Host relay 边界，不进入 renderer/mobile 会话链路。

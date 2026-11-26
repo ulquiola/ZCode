@@ -121,7 +121,6 @@ const platform = (
     ? {}
     : {
         requestSourceSettingsAttachment: async () => ({ attachmentId: "e2e" }),
-        reportTelemetryEvent: async () => {},
       }
 ) as IPlatformService;
 

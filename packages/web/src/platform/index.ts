@@ -1,8 +1,6 @@
 import {
-  mobilePluginDiscoveryTelemetrySchema,
   resolveLocaleFromLanguageTag,
   toZhOrEnLocale,
-  sessionCreateTelemetrySchema,
   type IPlatformService,
   type RemoteTarget,
   type WebRemoteControlStatus,
@@ -145,14 +143,6 @@ export function createWebPlatform(options?: {
     onPaymentCallback: () => () => {},
     onShareImport: () => () => {},
     notifyRendererReady: () => {},
-    reportTelemetryEvent: async (event) => {
-      // 手机只开放 session_create 和插件发现事件；管理结果仍由 Desktop Host 唯一上报。
-      const parsed = sessionCreateTelemetrySchema
-        .or(mobilePluginDiscoveryTelemetrySchema)
-        .safeParse(event);
-      if (parsed.success) platformProxy?.reportTelemetryEvent?.(parsed.data);
-    },
-    reportArmsCustomEvent: () => Promise.resolve(),
     showTaskNotification: (payload) => {
       if (document.hasFocus()) {
         return;

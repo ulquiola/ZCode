@@ -21,13 +21,6 @@ import {
   ZCODE_PROVIDER_PROJECT_TOKEN_NETWORK_ERROR,
   zcodeProviderRuntimeHeadersErrorCode,
 } from "@zcode/shared";
-import { RemoteConversationTelemetry } from "#src/conversation-telemetry/remoteConversationTelemetry.js";
-import { toAgentPluginDiscoveryTelemetry } from "#src/plugins/pluginManagementService.js";
-import {
-  remoteConversationTelemetryEventSchema,
-  type RemoteConversationTelemetryEvent,
-} from "@zcode/shared/conversation-telemetry";
-import { resolveWorkspaceTelemetryDetail, type RendererTelemetryEventPayload } from "@zcode/shared";
 import { isAuxiliarySessionKind } from "@zcode/shared";
 import { createAppControlReverseRpc } from "#src/app-control/index.js";
 import type { AppControlService } from "#src/app-control/contract.js";
@@ -65,11 +58,7 @@ import {
   type ChannelReplyResult,
 } from "@zcode/shared";
 import { requestPluginReferenceCatalog } from "#src/zcode-agent/pluginReferenceCatalogRequest.js";
-import {
-  localTtftFactsSchema,
-  sessionDebugSnapshotSchema,
-  type LocalTtftFacts,
-} from "@zcode/shared";
+import { sessionDebugSnapshotSchema } from "@zcode/shared";
 /* oxlint-disable eslint(max-lines) -- ZCode Protocol transport、通知 wiring 和 app-facing session 方法必须共享同一个 client/emitter 上下文。 */
 import { ensureIndependentPlanSupport } from "./independentPlanSupport.js";
 import { isRemoteInputPredictionEnabled } from "./inputPredictionSwitch.js";
@@ -84,7 +73,7 @@ import {
 } from "@zcode/shared";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { Emitter } from "@zcode/rpc";
+import { Emitter, Event } from "@zcode/rpc";
 import type { IDisposable } from "@zcode/rpc";
 import type {
   AccountProviderConfigSnapshot,
@@ -371,7 +360,6 @@ import {
   parseWorkspaceConfigTopic,
   conversationTopicWireCandidateSchema,
   conversationTelemetryFactSchema,
-  turnAdmissionTelemetrySchema,
   cuaPermissionObservationSchema,
   sessionsIndexTopic,
   sessionsIndexReconcileResultSchema,
@@ -1153,8 +1141,6 @@ interface CreateZCodeAgentServiceBaseOptions extends Omit<
 > {
   /** 仅供 MCP 状态探测进程使用，不能把空闲回收传给 chat。 */
   mcpStatusIdleTimeoutMs?: number;
-  /** Desktop Host 注入：Agent 插件推荐事实在此单点转成插件业务埋点。 */
-  reportPluginTelemetryEvent?: (event: RendererTelemetryEventPayload) => void;
   accountProviderConfigSource?: ProviderSource<AccountProviderConfigSnapshot>;
   /** Desktop Host 请求 Main 登记 Agent 已授权的精确本地视频路径。 */
   authorizeLocalMediaPreviewPath?: (path: string) => Promise<string>;
@@ -1514,12 +1500,10 @@ export function createZCodeAgentService(
     snapshot: SessionLifecycleSnapshot;
   }>();
   const conversationFrameEmitters = new Map<string, Emitter<ConversationTopicWireCandidate>>();
-  const localTtftFactsEmitter = new Emitter<{ workspaceKey: string; facts: LocalTtftFacts }>();
   const conversationTelemetryFactEmitters = new Map<string, Emitter<ConversationTelemetryInput>>();
   const contextComposition = createContextCompositionClient({
     onModelRequestMetrics: (workspace, fact) => {
-      if (!collectRemoteConversationFact(workspace, fact))
-        getConversationTelemetryFactEmitter(workspace).fire(fact);
+      getConversationTelemetryFactEmitter(workspace).fire(fact);
     },
     getExistingClient: (target) => getReadOnlyClient(target, "existing-only"),
     isRuntimeUnavailableError: (error) =>
@@ -1534,28 +1518,6 @@ export function createZCodeAgentService(
     getPluginManagementClient: () => getPluginManagementClient(),
     getExistingClient: (target) => getReadOnlyClient(target, "existing-only"),
   });
-  const remoteConversationTelemetryEmitter = new Emitter<RemoteConversationTelemetryEvent>();
-  const remoteConversationTelemetry = new Map<string, RemoteConversationTelemetry>();
-  function collectRemoteConversationFact(
-    workspace: ZCodeAgentWorkspaceTarget,
-    fact: ConversationTelemetryInput,
-  ): boolean {
-    const key = resolveWorkspaceKey(workspace);
-    let collector = remoteConversationTelemetry.get(key);
-    if (!collector) {
-      collector = new RemoteConversationTelemetry({
-        workspaceScopeKey: `${v4ConnectionId}\0${key}`,
-        workspaceTelemetryDetail: resolveWorkspaceTelemetryDetail(workspace),
-        report: async (event) =>
-          remoteConversationTelemetryEmitter.fire(
-            remoteConversationTelemetryEventSchema.parse(event),
-          ),
-      });
-      remoteConversationTelemetry.set(key, collector);
-    }
-    return collector.acceptFact(fact);
-  }
-
   const offPeakLifecycleEmitters = new Map<string, Emitter<OffPeakLifecycleNotification>>();
   const pluginUiToolResultEmitter = new Emitter<
     PluginUiToolResultNotification & ZCodeAgentWorkspaceTarget
@@ -2811,39 +2773,11 @@ export function createZCodeAgentService(
           return;
         }
 
-        if (message.method === V4_NOTIFICATIONS.localTtftFacts) {
-          const parsed = localTtftFactsSchema.safeParse(message.params);
-          if (parsed.success && !workspace.remoteSessionId && !workspace.workspaceIdentity?.trim())
-            localTtftFactsEmitter.fire({
-              workspaceKey: resolveWorkspaceKey(workspace),
-              facts: parsed.data,
-            });
-          return;
-        }
-        if (message.method === V4_NOTIFICATIONS.turnAdmissionTelemetry) {
-          const parsed = turnAdmissionTelemetrySchema.safeParse(message.params);
-          if (parsed.success) {
-            if (!collectRemoteConversationFact(workspace, parsed.data))
-              getConversationTelemetryFactEmitter(workspace).fire(parsed.data);
-          } else logger.debug(undefined, "丢弃无效会话接纳遥测通知");
-          return;
-        }
         if (contextComposition.handleNotification(workspace, message)) return;
         if (message.method === V4_NOTIFICATIONS.conversationTelemetryFact) {
           const parsed = conversationTelemetryFactSchema.safeParse(message.params);
-          if (parsed.success && parsed.data.kind === "plugin.discovery") {
-            // 插件推荐事实只在 Host 上报一次，不进 renderer / 远控引擎，避免多窗口或手机重复计数。
-            try {
-              options?.reportPluginTelemetryEvent?.(
-                toAgentPluginDiscoveryTelemetry(parsed.data, workspace),
-              );
-            } catch {
-              /* 观测端故障与会话主链路隔离。 */
-            }
-          } else if (parsed.success) {
-            // 远控事实由执行服务独占，避免桌面同时打开该会话时重复计 step。
-            if (!collectRemoteConversationFact(workspace, parsed.data))
-              getConversationTelemetryFactEmitter(workspace).fire(parsed.data);
+          if (parsed.success) {
+            getConversationTelemetryFactEmitter(workspace).fire(parsed.data);
           } else {
             // 严格丢弃未知字段，避免 CLI runtime 新字段未经审计穿透到 renderer reporter。
             logger.warn(undefined, "丢弃无效 v4 conversation telemetry fact", {
@@ -4420,12 +4354,8 @@ export function createZCodeAgentService(
     }
     conversationTelemetryFactEmitters.clear();
     contextComposition.dispose();
-    for (const collector of remoteConversationTelemetry.values()) collector.dispose();
-    remoteConversationTelemetry.clear();
-    remoteConversationTelemetryEmitter.dispose();
     for (const emitter of offPeakLifecycleEmitters.values()) emitter.dispose();
     offPeakLifecycleEmitters.clear();
-    localTtftFactsEmitter.dispose();
     cuaPermissionObservationEmitter.dispose();
     pluginUiToolResultEmitter.dispose();
     for (const emitter of workspaceConfigFrameEmitters.values()) {
@@ -7725,14 +7655,9 @@ export function createZCodeAgentService(
       return getConversationFrameEmitter(params).event;
     },
 
-    onDynamicLocalTtftFacts(params: ZCodeAgentWorkspaceTarget) {
-      return (listener: (facts: LocalTtftFacts) => void) =>
-        localTtftFactsEmitter.event((event) => {
-          if (event.workspaceKey === resolveWorkspaceKey(params)) listener(event.facts);
-        });
-    },
-    onDynamicRemoteConversationTelemetry() {
-      return remoteConversationTelemetryEmitter.event;
+    onDynamicLocalTtftFacts() {
+      // 审计版已删除 TTFT 采集和协议通知；兼容现有 UI 订阅接口，不保存状态或产生网络行为。
+      return Event.None;
     },
     onDynamicConversationTelemetryFact(params: ZCodeAgentWorkspaceTarget) {
       return getConversationTelemetryFactEmitter(params).event;
@@ -7982,8 +7907,6 @@ export function createZCodeAgentService(
         // 该入口被 restartWorkspaceProcess 用作 runtime invalidation，并非
         // workspace/service 真 teardown。销毁 workspace emitter 会让既有 UI/task-index
         // listener 永久绑在死对象上；emitters 只由 disposeLocalState/disposeAll 释放。
-        remoteConversationTelemetry.get(workspaceKey)?.dispose();
-        remoteConversationTelemetry.delete(workspaceKey);
       }
       await processManager.disposeWorkspace(params);
     },

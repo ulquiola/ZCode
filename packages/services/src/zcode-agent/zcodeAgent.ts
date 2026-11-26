@@ -23,7 +23,6 @@ import type {
   ZCodeSessionContentProfile,
 } from "@zcode/shared";
 /* eslint-disable max-lines -- ZCode agent service 接口集中声明 protocol/session/workspace 方法，拆分会增加 service descriptor 迁移成本。 */
-import type { RemoteConversationTelemetryEvent } from "@zcode/shared/conversation-telemetry";
 import type { Event, IDisposable } from "@zcode/rpc";
 import { ServiceChannels } from "@zcode/shared";
 import type { AppUsageRange, AppUsageSnapshot, ZCodeTaskTokenUsageResult } from "@zcode/shared";
@@ -994,9 +993,6 @@ export interface IZCodeAgentService {
   onDynamicProcessResourceSample(): Event<AgentLaneResourceSample>;
   /** 插件启动超时的工作区提示；订阅时补投当前进程的降级事实。 */
   onDynamicPluginStartupDegraded(params: ZCodeAgentWorkspaceTarget): Event<void>;
-  /** MCP 进程生命周期与低频内存事件，仅供可信 Host relay 上报 ARMS。 */
-  /** 仅 trusted Host relay 订阅；手机统计不依赖 renderer 生命周期。 */
-  onDynamicRemoteConversationTelemetry(): Event<RemoteConversationTelemetryEvent>;
 
   onDynamicMcpTelemetry(): Event<ZCodeMcpTelemetryEvent>;
   /** MCP 进程树资源事实，只供可信 Host 汇总上报。 */

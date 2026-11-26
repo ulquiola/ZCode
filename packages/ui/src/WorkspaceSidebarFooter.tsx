@@ -1,4 +1,3 @@
-import { useSetInterfaceModeWithTelemetry } from "@/lib/appTelemetry.js";
 import { SidebarNativeTooltip, ControlHintTooltip } from "@/ControlHintTooltip.js";
 /* oxlint-disable eslint(max-lines) -- footer 聚合账户、主题、模式和快捷键菜单。 */
 import type { Locale, UserInfo } from "@zcode/shared";
@@ -135,7 +134,7 @@ export const WorkspaceSidebarFooter = memo(function WorkspaceSidebarFooterCompon
   const platform = usePlatform();
   const openRewards = useOpenRewards();
   const interfaceMode = useZCodeStore((state) => state.interfaceMode);
-  const setInterfaceMode = useSetInterfaceModeWithTelemetry(platform, "app.profile");
+  const setInterfaceMode = useZCodeStore((state) => state.setInterfaceMode);
   const zoomInShortcutLabel = useShortcutCommandLabel("zoomIn");
   const zoomOutShortcutLabel = useShortcutCommandLabel("zoomOut");
   const resetZoomShortcutLabel = useShortcutCommandLabel("resetZoom");

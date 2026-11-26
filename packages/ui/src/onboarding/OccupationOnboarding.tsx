@@ -1,5 +1,3 @@
-import { useSetInterfaceModeWithTelemetry } from "@/lib/appTelemetry.js";
-import { useOnboardingTelemetry } from "@/onboarding/useOnboardingTelemetry.js";
 import { OnboardingHeader } from "@/onboarding/OnboardingHeader.js";
 import { OccupationOnboardingVisual } from "@/onboarding/OccupationOnboardingVisual.js";
 import { occupations, type OccupationValue } from "@/onboarding/occupationOptions.js";
@@ -61,7 +59,6 @@ export function OccupationOnboarding({
   const [occupation, setOccupation] = useState<OccupationValue | null>("developer");
   const savedInterfaceMode = useZCodeStore((state) => state.interfaceMode);
   const setInterfaceMode = useZCodeStore((state) => state.setInterfaceMode);
-  const applyInterfaceMode = useSetInterfaceModeWithTelemetry(platform, "app.onboarding");
   // mode 为 null 表示模式页被"跳过"（跳过是显式答案，记录里保留 null 而非兜底值）。
   const [mode, setMode] = useState<InterfaceMode | null>(savedInterfaceMode);
   const [step, setStep] = useState<0 | 1 | 2>(0);
@@ -83,22 +80,8 @@ export function OccupationOnboarding({
     update,
   });
   const onboardingVisible = requested || (needsOnboarding === true && !dismissed);
-  const captureEnd = useOnboardingTelemetry({
-    platform,
-    visible:
-      Boolean(settings) &&
-      onboardingVisible &&
-      (requested || needsOnboarding !== null || Boolean(settings?.onboardingOccupation)),
-    step,
-    occupation,
-    mode,
-    memory,
-    suggestions,
-    migration,
-  });
   const closeOnboarding = useCallback(() => {
     if (savingRef.current) return;
-    captureEnd("close", intl.formatMessage({ id: "occupationOnboarding.close" }))();
     setStep(0);
     setDismissed(true);
     setRequested(false);
@@ -107,7 +90,7 @@ export function OccupationOnboarding({
         logger.warn("[occupation-onboarding] 写入关闭决策失败", { error: String(cause) });
       });
     }
-  }, [captureEnd, intl, onboardingRecord, platform, setRequested]);
+  }, [onboardingRecord, platform, setRequested]);
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (
@@ -221,12 +204,11 @@ export function OccupationOnboarding({
   const save = async (skip = false) => {
     if (savingRef.current) return;
     savingRef.current = true;
-    const reportEnd = captureEnd(skip ? "skip" : "start", t(skip ? "skip" : "start"));
     setSaving(true);
     setError(false);
     try {
-      // 卡片是草稿；实际应用才报切换，后续偏好保存失败重试也不重报同值。
-      if (mode) applyInterfaceMode(mode);
+      // 卡片是草稿；实际应用才写入切换，后续偏好保存失败重试也不重复应用同值。
+      if (mode) setInterfaceMode(mode);
       logger.info("[occupation-onboarding] 保存偏好", { interfaceMode: mode });
       await update({
         // settings 侧保持既有语义：跳过落保守默认值（职业 other / 偏好关），
@@ -235,8 +217,7 @@ export function OccupationOnboarding({
         memoryEnabled: skip ? false : memory,
         proactiveSuggestionsEnabled: !skip && mode === "office" && suggestions,
       });
-      reportEnd();
-      // 保存成功就是本次引导的终点；本地记录失败不应留下可再次上报的引导页面。
+      // 保存成功就是本次引导的终点；本地记录失败也应结束引导页面。
       setStep(0);
       setDismissed(true);
       setRequested(false);

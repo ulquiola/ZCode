@@ -21,7 +21,6 @@ import {
   type WorkflowAgentRunner,
 } from "@zcode/core";
 import {
-  type AgentExecutionTelemetryPort,
   createChildTraceContext,
   createSessionId,
   type ContextSourcePort,
@@ -43,7 +42,6 @@ import type { PrepareUserExecutionBoundary, ZCodeAppOptions } from "./types.js";
 import { createWorkflowMethods, type WorkflowFacade } from "./workflow-methods.js";
 
 interface CreateWorkflowFacadeDeps {
-  agentTelemetry: AgentExecutionTelemetryPort;
   appOptions: ZCodeAppOptions;
   appVersion: string;
   artifactStore?: ToolArtifactStorePort;
@@ -298,10 +296,6 @@ async function createWorkflowChildRuntime(
       workingDirectory: deps.workingDirectory,
     },
     {
-      agentTelemetry: deps.agentTelemetry,
-      agentTelemetryCausation: deps.agentTelemetry.captureCausation(),
-      // Workflow 在父工具返回后独立调度，不能伪装成父 Span 的同步 Child。
-      agentTelemetryCausationMode: "linked_root",
       eventStore: createInMemorySessionEventStore(),
       sessionStore: deps.sessionStore,
       logger: deps.logger,

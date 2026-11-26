@@ -9,6 +9,7 @@ import type {
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import type { AssistantPreviewCardsAutoOpenRequest } from "@/lib/assistantPreviewCards.js";
 import type { OpenAutomationsMain } from "@/lib/taskNavigationHistory.js";
+import { PRIMARY_LEAF } from "@/v4/paneLayoutTree.js";
 import type { MessageFileLinkTarget } from "@/components/ai-elements/message.js";
 import type {
   OpenScopedSubagentSideTabRequest,
@@ -27,7 +28,6 @@ import { logger } from "@/logger.js";
 import {
   effectiveFocusedPaneId,
   paneWorkspaceKey,
-  PRIMARY_LEAF,
   usePaneLayoutStore,
   V4_PRIMARY_PANE_ID,
   type PaneWorkspaceScope,
@@ -57,7 +57,6 @@ import {
 export interface V4WorkspaceChatAreaProps {
   workspacePath: string;
   workspaceIdentity?: string;
-  /** Prompt 模板埋点当前仅覆盖 Desktop；Web / 手机远控保留 UI 行为但不触发该事件。 */
   isDesktop?: boolean;
   readOnly?: boolean;
   readOnlyReason?: string;

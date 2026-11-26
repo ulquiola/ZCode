@@ -149,7 +149,6 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       openTaskFiles,
     ],
   );
-  const msg = (id: string) => intl.formatMessage({ id: `project.${id}` });
   const start = async (projectId?: string, hostId?: string, taskGroupId?: string | null) => {
     const activeTaskId = useZCodeSessionStore
       .getState()
@@ -230,10 +229,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   const changeTheme = useCallback((value: string) => setTheme(value as Theme), [setTheme]);
   const upgrade = useCallback<
     NonNullable<Parameters<typeof WorkspaceSidebarFooter>[0]["onUpgradeClick"]>
-  >(
-    (providerId, funnelContext) => openCodingPlanUpgrade({ providerId, funnelContext }),
-    [openCodingPlanUpgrade],
-  );
+  >((providerId) => openCodingPlanUpgrade({ providerId }), [openCodingPlanUpgrade]);
   const banner = useMemo(() => <SidebarBottomActivity />, []);
   // 手机远控 home-only 没有 base attachment，也就没有项目契约；改用 relay 层工作区列表与重连入口。
   const homeOnlySwitcher = service ? undefined : props.webRemoteControlWorkspaceSwitcher;

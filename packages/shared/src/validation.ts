@@ -1,11 +1,5 @@
-import { mobilePluginDiscoveryTelemetrySchema, telemetryUiModeSchema } from "./telemetry.js";
-import { remoteConversationTelemetryEventSchema } from "./conversation-telemetry/remoteTelemetryEvent.js";
 import { databaseStartupControlSchema, databaseStartupStateSchema } from "./database-startup.js";
 import { mcpAppInstanceSchema } from "./mcp-apps/instance.js";
-import {
-  automationSessionCreateTelemetrySchema,
-  sessionCreateTelemetrySchema,
-} from "./sessionCreateTelemetry.js";
 /* eslint-disable max-lines -- 运行时 schema 当前集中在共享包入口，外部 relay payload 校验加入后先保持单一导出面。 */
 import { z } from "zod";
 
@@ -60,7 +54,7 @@ import { browserCommandResultSchema } from "./browser-use/result.js";
 import { modelSelectionSchema } from "./model-selection.js";
 import { localeSchema, replyLanguageSchema } from "./validationAppSettings.js";
 import { zcodeProcessDiagnosticSchema } from "./process-diagnostic.js";
-import { PROCESS_RESOURCE_CLI_LANES } from "./processResourceTelemetry.js";
+import { PROCESS_RESOURCE_CLI_LANES } from "./processResourceSample.js";
 import {
   providerProvisioningErrorCodeSchema,
   providerProvisioningLaneStatusSchema,
@@ -73,7 +67,13 @@ import type { WebRemoteControlAppPayload } from "./web-remote-control.js";
 import { webRemoteControlMobileLogAppPayloadSchemas } from "#src/web-remote-relay/index.js";
 import { PROTOCOL_V4_LIMITS } from "./zcode-protocol-v4/core.js";
 import { sourceServerArtifactPolicySchema } from "./source-server/release.js";
-import { sessionWorkflowActivitySchema } from "./zcode-protocol-v4/sessions-index-workflow-activity.js";
+import {
+  zcodeMcpResourceSamplesSchema,
+  zcodeToolExecResourceSchema,
+  zcodeProcessResourceSampleSchema,
+} from "./zcode-protocol/index.js";
+import { zcodeTaskModeSchema } from "./zcode-task-mode-schema.js";
+import { errorAttributionSchema } from "./zcode-protocol-v4/snapshot.js";
 import {
   webRemoteControlRpcTransportAckSchema,
   webRemoteControlRpcTransportFrameSchema,
@@ -93,15 +93,9 @@ import {
 } from "./task-realtime-core.js";
 import { wslUserSchema } from "./wslUserValidation.js";
 import { legacyZCodeProviderSchema } from "./zcode-agent-policy.js";
-import { errorAttributionSchema } from "./zcode-protocol-v4/snapshot.js";
-import {
-  zcodeMcpResourceSamplesSchema,
-  zcodeMcpTelemetryEventSchema,
-  zcodeProcessResourceSampleSchema,
-  zcodeToolExecResourceSchema,
-} from "./zcode-protocol/index.js";
-import { zcodeTaskModeSchema } from "./zcode-task-mode-schema.js";
 
+export { WSL_USER_MAX_LENGTH, isValidWslUser, wslUserSchema } from "./wslUserValidation.js";
+export { zcodeTaskModeSchema } from "./zcode-task-mode-schema.js";
 export {
   appSettingsOccupationEnum,
   appSettingsPatchSchema,
@@ -110,8 +104,6 @@ export {
   postUpdateReleaseNotesPayloadSchema,
   REPLY_LANGUAGE_MAX_LENGTH,
 } from "./validationAppSettings.js";
-export { isValidWslUser, WSL_USER_MAX_LENGTH, wslUserSchema } from "./wslUserValidation.js";
-export { zcodeTaskModeSchema } from "./zcode-task-mode-schema.js";
 
 export function formatZodError(error: z.ZodError): string {
   return error.issues
@@ -373,12 +365,6 @@ const webRemoteControlActionPayloadSchemas = [
 ] as const;
 
 const webRemoteControlAppPayloadSchemas = [
-  z
-    .object({
-      zcode_type: z.literal("telemetry-report"),
-      event: z.union([sessionCreateTelemetrySchema, mobilePluginDiscoveryTelemetrySchema]),
-    })
-    .strict(),
   z.object({
     zcode_type: z.literal("bootstrap-request"),
     terminalClientSessionId: webRemoteControlTransportIdSchema.optional(),
@@ -666,34 +652,6 @@ export const taskNotificationPayloadSchema = z.object({
   requestId: nonEmptyStringSchema.optional(),
   title: z.string(),
   body: z.string(),
-});
-
-export const telemetryRendererContextSchema = z.object({
-  uiMode: telemetryUiModeSchema.optional(),
-  clientTimezone: nonEmptyStringSchema,
-  clientLanguage: nonEmptyStringSchema,
-  screenResolution: nonEmptyStringSchema,
-});
-
-export const rendererTelemetryEventPayloadSchema = z.object({
-  context: telemetryRendererContextSchema,
-  elementName: nonEmptyStringSchema,
-  eventRegion: nonEmptyStringSchema,
-  eventType: nonEmptyStringSchema,
-  eventText: z.string().optional(),
-  eventExtraDetail: z.record(z.string(), z.string()),
-  userId: z.string().optional(),
-  talkId: z.string().optional(),
-  messageId: z.string().optional(),
-});
-
-export const armsCustomEventPayloadSchema = z.object({
-  name: nonEmptyStringSchema,
-  group: nonEmptyStringSchema,
-  value: z.number().finite().optional(),
-  properties: z
-    .record(z.string(), z.union([z.string(), z.number().finite(), z.boolean(), z.undefined()]))
-    .optional(),
 });
 
 export const broadcastMessageSchema = z.object({
@@ -1416,13 +1374,13 @@ export const agentLaneResourceSampleSchema = zcodeProcessResourceSampleSchema
 export type AgentLaneResourceSample = z.infer<typeof agentLaneResourceSampleSchema>;
 
 /** Host 仅传运行环境的 SHA-256 哈希，避免原始主机、用户或 URL 进入消息与日志。 */
-const resourceTelemetryEnvironmentKeySchema = z.string().regex(/^[a-f0-9]{64}$/);
+const resourceEnvironmentKeySchema = z.string().regex(/^[a-f0-9]{64}$/);
 
 export const hostAgentResourceSampleResponseSchema = z
   .object({
     type: z.literal("agent-resource-sample"),
     runtimeSurface: z.enum(["local", "remote"]),
-    environmentKey: resourceTelemetryEnvironmentKeySchema.optional(),
+    environmentKey: resourceEnvironmentKeySchema.optional(),
     sample: agentLaneResourceSampleSchema,
   })
   .strict();
@@ -1472,7 +1430,7 @@ export const hostMcpResourceSamplesResponseSchema = z
   .object({
     type: z.literal("mcp-resource-samples"),
     runtimeSurface: z.enum(["local", "remote"]),
-    environmentKey: resourceTelemetryEnvironmentKeySchema.optional(),
+    environmentKey: resourceEnvironmentKeySchema.optional(),
     samples: zcodeMcpResourceSamplesSchema,
   })
   .strict();
@@ -1486,47 +1444,6 @@ export const hostToolExecResourceResponseSchema = z
   })
   .strict();
 export type HostToolExecResourceResponse = z.infer<typeof hostToolExecResourceResponseSchema>;
-
-export const hostMcpTelemetryResponseSchema = z
-  .object({
-    type: z.literal("mcp-telemetry"),
-    runtimeSurface: z.enum(["local", "remote"]),
-    event: zcodeMcpTelemetryEventSchema,
-  })
-  .strict();
-export type HostMcpTelemetryResponse = z.infer<typeof hostMcpTelemetryResponseSchema>;
-
-export const hostPluginTelemetryResponseSchema = z
-  .object({
-    type: z.literal("plugin-telemetry"),
-    event: rendererTelemetryEventPayloadSchema.refine((event) =>
-      ["plugin_lifecycle", "plugin_discovery", "plugin_usage", "plugin_runtime_error"].includes(
-        event.elementName,
-      ),
-    ),
-  })
-  .strict();
-export type HostPluginTelemetryResponse = z.infer<typeof hostPluginTelemetryResponseSchema>;
-
-export const hostRemoteConversationTelemetryResponseSchema = z
-  .object({
-    type: z.literal("remote-conversation-telemetry"),
-    event: remoteConversationTelemetryEventSchema,
-  })
-  .strict();
-export type HostRemoteConversationTelemetryResponse = z.infer<
-  typeof hostRemoteConversationTelemetryResponseSchema
->;
-
-export const hostSessionCreateTelemetryResponseSchema = z
-  .object({
-    type: z.literal("session-create-telemetry"),
-    event: automationSessionCreateTelemetrySchema,
-  })
-  .strict();
-export type HostSessionCreateTelemetryResponse = z.infer<
-  typeof hostSessionCreateTelemetryResponseSchema
->;
 
 export const hostAgentRunningTaskCountChangedResponseSchema = z.object({
   type: z.literal("agent-running-task-count-changed"),
@@ -1762,26 +1679,6 @@ export const hostPluginSandboxRegisterRequestResponseSchema = z
     "Invalid sandbox provenance",
   );
 
-export const networkObservationSchema = z.object({
-  transport: z.enum(["http", "websocket", "rpc"]),
-  interface: z.string(),
-  durationMs: z.number(),
-  ok: z.boolean(),
-  statusCode: z.number().optional(),
-  errorKind: z.string().optional(),
-  attempt: z.number().int().positive().optional(),
-  dnsMs: z.number().optional(),
-  tcpMs: z.number().optional(),
-  tlsMs: z.number().optional(),
-  ttfbMs: z.number().optional(),
-  downloadMs: z.number().optional(),
-});
-
-export const hostNetworkTelemetryBatchResponseSchema = z.object({
-  type: z.literal("network-telemetry-batch"),
-  observations: z.array(networkObservationSchema).max(500),
-});
-
 export const hostProviderProvisioningSourceChangedResponseSchema = z
   .object({
     type: z.literal("provider-provisioning-source-changed"),
@@ -1859,12 +1756,8 @@ export const hostResponseMessageSchema = z.discriminatedUnion("type", [
   hostAgentProcessExceptionResponseSchema,
   hostAgentResourceSampleResponseSchema,
   hostResourceSampleResponseSchema,
-  hostMcpTelemetryResponseSchema,
   hostMcpResourceSamplesResponseSchema,
   hostToolExecResourceResponseSchema,
-  hostSessionCreateTelemetryResponseSchema,
-  hostRemoteConversationTelemetryResponseSchema,
-  hostPluginTelemetryResponseSchema,
   hostAgentRunningTaskCountChangedResponseSchema,
   hostQuitBlockersChangedResponseSchema,
   hostWorkspaceRunningTaskCountChangedResponseSchema,
@@ -1888,7 +1781,6 @@ export const hostResponseMessageSchema = z.discriminatedUnion("type", [
   hostCredentialCipherRequestResponseSchema,
   hostCredentialKeyShareRequestResponseSchema,
   hostPluginSandboxRegisterRequestResponseSchema,
-  hostNetworkTelemetryBatchResponseSchema,
   hostProviderProvisioningSourceChangedResponseSchema,
   hostProviderProvisioningExecutionResultResponseSchema,
   hostProviderProvisioningLaneRequestResponseSchema,

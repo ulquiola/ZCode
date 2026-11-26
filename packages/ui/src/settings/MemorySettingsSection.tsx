@@ -10,7 +10,6 @@ import { ServiceProvider } from "@/hooks/useServices.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useSettings, updateSettingsAndRefreshSnapshot } from "@/hooks/useSettingService.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import { runUserAction, runUserActionAsync } from "@/lib/userActionTelemetry.js";
 import { logger } from "@/logger.js";
 import {
   SettingsScopeBlockedNotice,
@@ -125,28 +124,16 @@ function MemoryDeviceSettings({
       setSaving(true);
       setSaveError(null);
       try {
-        await runUserActionAsync({
-          input: { featureId: "settings.memory", action: "toggle_memory", trigger: "switch" },
-          operation: async () => {
-            // 原先开关固定写 base Host，远端因此无效。整次写入绑定所选设备，不同步本机设置。
-            await updateSettingsAndRefreshSnapshot({
-              settingService: services.settingService,
-              patch: { memoryEnabled: enabled },
-            });
-            if (isLocal) {
-              await services.onboardingRecordService
-                ?.updateRecordPreferences({ memoryEnabled: enabled })
-                .catch((cause: unknown) =>
-                  logger.warn("[memory-settings] 回写引导记录失败", cause),
-                );
-            }
-          },
-          completed: {
-            resultSource: "shared_settings",
-            stateAfter: enabled ? "enabled" : "disabled",
-          },
-          failureStage: "settings_commit",
+        // 原先开关固定写 base Host，远端因此无效。整次写入绑定所选设备，不同步本机设置。
+        await updateSettingsAndRefreshSnapshot({
+          settingService: services.settingService,
+          patch: { memoryEnabled: enabled },
         });
+        if (isLocal) {
+          await services.onboardingRecordService
+            ?.updateRecordPreferences({ memoryEnabled: enabled })
+            .catch((cause: unknown) => logger.warn("[memory-settings] 回写引导记录失败", cause));
+        }
       } catch (cause) {
         const message = cause instanceof Error ? cause.message : String(cause);
         setSaveError(message);
@@ -325,12 +312,7 @@ export function MemorySettingsSection({
   }, [displayWorkspaces, selectedWorkspaceId]);
 
   const handleRefresh = useCallback(async () => {
-    await runUserActionAsync({
-      input: { featureId: "settings.memory", action: "refresh_memory", trigger: "button" },
-      operation: refreshCatalog,
-      completed: { resultSource: "platform_result" },
-      failureStage: "catalog_refresh",
-    });
+    await refreshCatalog();
   }, [refreshCatalog]);
 
   return (
@@ -378,18 +360,7 @@ export function MemorySettingsSection({
           selectedWorkspace={selectedWorkspace}
           workspaces={displayWorkspaces}
           onRefresh={handleRefresh}
-          onScopeKeyChange={(workspaceId) =>
-            runUserAction({
-              input: {
-                featureId: "settings.memory",
-                action: "change_memory_scope",
-                trigger: "select",
-              },
-              operation: () => setSelectedWorkspaceId(workspaceId),
-              completed: { resultSource: "local_commit" },
-              failureStage: "local_commit",
-            })
-          }
+          onScopeKeyChange={(workspaceId) => setSelectedWorkspaceId(workspaceId)}
         />
       )}
     </div>

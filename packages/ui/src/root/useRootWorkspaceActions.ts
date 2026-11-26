@@ -17,7 +17,6 @@ import type {
   RemoteConnectionOpenPreference,
 } from "@/app-shell/types.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
-import { reportAppTelemetryEvent } from "@/lib/appTelemetry.js";
 import { resolveLogoutProviderFamilyDomain } from "@/lib/providerFamilyDomainSettings.js";
 import { isRendererReloadNavigation } from "@/lib/rendererNavigation.js";
 import { parseWslUncWorkspacePath } from "@/lib/wslUncWorkspace.js";
@@ -38,11 +37,7 @@ import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { notifyTaskNavigationCommitted } from "@/store/zcodeSessionStoreNavigation.js";
 import { type TabStore, type TabStoreState } from "@/store/tabStore.js";
 import type { RootProps } from "@/root/types.js";
-import {
-  hadPersistedPaneLayoutAtModuleLoad,
-  INITIAL_PANE_LAYOUT,
-  usePaneLayoutStore,
-} from "@/v4/paneLayoutStore.js";
+import { hadPersistedPaneLayoutAtModuleLoad, usePaneLayoutStore } from "@/v4/paneLayoutStore.js";
 import { resolveWorkbenchNewTaskTarget } from "@/conversation-workspace-target/workbenchTarget.js";
 import type { WorkbenchNewTaskTarget } from "@/conversation-workspace-target/workbenchTarget.js";
 import { useWorkbenchGroupStore } from "@/v4/workbenchGroupStore.js";
@@ -499,20 +494,6 @@ export function useRootWorkspaceActions({
     if (!confirmed) {
       return;
     }
-
-    // Bug 原因：telemetry 是辅助链路；等待网络重试会延迟退出登录，甚至在旧的无超时实现里
-    // 无限阻塞主流程。这里只调度事件，Main 侧负责有界重试与退出 drain。
-    void reportAppTelemetryEvent(
-      platform,
-      {
-        elementName: "app_user_logout",
-        eventRegion: "app_profile",
-        eventType: "ck",
-        eventExtraDetail: {},
-        userId,
-      },
-      "Root",
-    );
     const settingsBeforeLogout = await services.settingService.get();
     const nextProviderFamilyDomain = resolveLogoutProviderFamilyDomain({
       currentDomain: settingsBeforeLogout.providerFamilyDomain,

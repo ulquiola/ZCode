@@ -6,10 +6,12 @@
 import { ConversationProjectionStore } from "@/v4/conversationProjectionStore.js";
 import { ConversationRowPool } from "@/v4/conversationRowSharing.js";
 import { shouldExposeE2EStoreBridge } from "@/lib/e2eStoreBridge.js";
-import type { SessionOpenKind } from "@/lib/sessionOpenArmsTelemetry.js";
 import { conversationTopic, type ConversationTransport } from "@/v4/transport.js";
 import { logger } from "@/logger.js";
 import type { CommandsQueryParams, CommandsQueryResult } from "@zcode/shared/zcode-protocol-v4";
+
+/** 本地订阅诊断使用的投影缓存状态。 */
+type SessionOpenKind = "cold" | "warm" | "keep_warm";
 
 /** pane 持有的租约；release 幂等。 */
 export interface SessionLease {
@@ -17,8 +19,6 @@ export interface SessionLease {
   readonly store: ConversationProjectionStore;
   /** 由数据层按 projection 生命周期判定，避免 pane 首次 render 时 snapshot 仍为空。 */
   readonly openKind: SessionOpenKind;
-  /** pane acquire 的 Renderer 单调时钟起点。 */
-  readonly startedAt: number;
   release(): void;
 }
 
@@ -43,10 +43,6 @@ interface SessionEntry {
   store: ConversationProjectionStore;
   refCount: number;
   keepWarmTimer: ReturnType<typeof setTimeout> | null;
-}
-
-function monotonicNow(): number {
-  return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
 
 export class SessionDataLayer {
@@ -78,7 +74,6 @@ export class SessionDataLayer {
       throw new Error("SessionDataLayer 已释放，不能再 acquire");
     }
     const topic = conversationTopic(sessionId);
-    const startedAt = monotonicNow();
     let entry = this.entries.get(topic);
     let openKind: SessionOpenKind;
     if (entry) {
@@ -94,7 +89,7 @@ export class SessionDataLayer {
       this.entries.set(topic, entry);
       openKind = "cold";
       // 订阅失败落在 store.state（status=error + retry()），不在这里抛。
-      void store.connect({ rendererPrepareStartedAt: startedAt });
+      void store.connect();
     }
     logger.lifecycle.info("v4 session data lease acquired", {
       event: "v4.session_data.acquire",
@@ -112,7 +107,6 @@ export class SessionDataLayer {
       sessionId,
       store: entry.store,
       openKind,
-      startedAt,
       release: () => {
         if (released) return;
         released = true;

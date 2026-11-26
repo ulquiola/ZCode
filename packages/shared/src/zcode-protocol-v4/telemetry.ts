@@ -1,7 +1,19 @@
 import { z } from "zod";
-import { sanitizeTelemetrySkillName } from "../telemetry.js";
 import { zcodeSyntheticUserMessageSourceSchema } from "../zcode-protocol-legacy-types.js";
 import { timestampSchema } from "./core.js";
+
+const MAX_TELEMETRY_SKILL_NAME_LENGTH = 64;
+const TELEMETRY_SKILL_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/u;
+
+/** 只接受本地技能名白名单；不引入外部上报模块。 */
+function isSafeSkillName(value: unknown): boolean {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= MAX_TELEMETRY_SKILL_NAME_LENGTH &&
+    TELEMETRY_SKILL_NAME_PATTERN.test(value)
+  );
+}
 
 const factBaseFields = {
   /** 会话创建期采用的 App Memory 开关，不表示记忆读写结果。 */
@@ -143,7 +155,7 @@ const toolLifecycleFactSchema = z
     skillName: z
       .string()
       .refine(
-        (value) => sanitizeTelemetrySkillName(value) === value,
+        (value) => isSafeSkillName(value),
         "skillName must be a bounded, safe resolved Skill identifier",
       )
       .optional(),

@@ -1,4 +1,3 @@
-import { getLocalTtftObserver } from "@/v4/telemetry/local-ttft/contract.js";
 import { GenUiMessageResponse } from "@/gen-ui/index.js";
 import { ConversationUserInputBubble } from "@/v4/ConversationUserInputBubble.js";
 import { expandTopicInputMessages } from "@/v4/topicInputMessages.js";
@@ -10,7 +9,6 @@ import {
   memo,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -96,9 +94,6 @@ import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { requestTaskNavigation } from "@/store/zcodeSessionStoreNavigation.js";
 import { useOptionalProjectDirectory } from "@/project-sidebar/ProjectDirectoryProvider.js";
 import type { ProjectTask } from "@/project-sidebar/contract.js";
-import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { reportAppTelemetryEvent } from "@/lib/appTelemetry.js";
-import { runUserAction, runUserActionAsync } from "@/lib/userActionTelemetry.js";
 import { logger } from "@/logger.js";
 import { PluginUiModelContextChip, formatPluginDisplayName } from "@/plugin-ui/index.js";
 import type { AssistantPreviewCard } from "@/lib/assistantPreviewCards.js";
@@ -290,12 +285,7 @@ const CopyRowAction = memo(function CopyRowAction({
   const [copied, setCopied] = useState(false);
   const handleCopy = useCallback(() => {
     if (!text || !navigator.clipboard) return;
-    void runUserActionAsync({
-      input: { featureId: "conversation.history.feedback", action: "copy", trigger: "button" },
-      operation: () => navigator.clipboard.writeText(text),
-      completed: { resultSource: "platform_result" },
-      failureStage: "clipboard_write",
-    }).then(() => {
+    void navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1200);
     });
@@ -1330,10 +1320,8 @@ export const ConversationAssistantTextActions = memo(function ConversationAssist
   compactForRemoteControl = false,
   feedback = null,
   hookInvocations,
-  sessionId,
   turnId,
   sourceCommandIds = EMPTY_SOURCE_COMMAND_IDS,
-  sourceMessageId,
   onFork,
   onFeedbackChange,
   className,
@@ -1348,11 +1336,7 @@ export const ConversationAssistantTextActions = memo(function ConversationAssist
   sessionId?: string | null;
   turnId?: string;
   sourceCommandIds?: readonly string[];
-  /**
-   * 本轮发起命令（turnHeader.sourceCommandId），反馈埋点靠它关联到那一轮的 send_btn /
-   * message_completion。completion 取 CLI inputId，只有普通发送与编辑重发经 E2E 证实同值，
-   * 见 docs/monitoring/business-monitoring.md。拿不到（旧快照、轮头未投影）时上报空串。
-   */
+  /** 本轮发起命令（turnHeader.sourceCommandId）；调用方仍会传入，保留字段以维持 props 契约。 */
   sourceMessageId?: string;
   onFork?: (target: ConversationRowTarget) => void;
   onRetry?: (target: ConversationRowTarget) => void;
@@ -1360,7 +1344,6 @@ export const ConversationAssistantTextActions = memo(function ConversationAssist
   className?: string;
 }) {
   const { intl, locale } = useZCodeIntl();
-  const platform = useOptionalPlatform();
   const [localFeedback, setLocalFeedback] = useState<AssistantMessageFeedback | null>(feedback);
   const copyLabel = intl.formatMessage({ id: "chat.message.copy" });
   const likeLabel = intl.formatMessage({
@@ -1403,36 +1386,12 @@ export const ConversationAssistantTextActions = memo(function ConversationAssist
           },
         );
       }
-      if (platform && entityId) {
-        void reportAppTelemetryEvent(
-          platform,
-          {
-            elementName: "assistant_message_feedback",
-            eventRegion: "chat",
-            eventType: "ck",
-            eventExtraDetail: {
-              reaction: resolvedFeedback ?? "none",
-              // message_id 是 assistant 行 entityId，和 completion 的 message_id 对不上；
-              // 数据侧按这个字段把反馈关联到所在轮（模型、版本、工具失败）。
-              source_message_id: sourceMessageId ?? "",
-            },
-            ...(sessionId ? { talkId: sessionId } : {}),
-            messageId: entityId,
-          },
-          "ConversationRowView",
-        );
-      }
     },
-    [entityId, localFeedback, onFeedbackChange, platform, rowId, sessionId, sourceMessageId],
+    [entityId, localFeedback, onFeedbackChange, rowId],
   );
   const handleFork = useCallback(() => {
     if (entityId) {
-      runUserAction({
-        input: { featureId: "conversation.history.branch", action: "fork", trigger: "button" },
-        operation: () => onFork?.({ rowId, entityId }),
-        completed: { resultSource: "optimistic_projection" },
-        failureStage: "fork",
-      });
+      onFork?.({ rowId, entityId });
     }
   }, [entityId, onFork, rowId]);
   const forkDestination = useForkDestination();
@@ -1566,55 +1525,6 @@ const AssistantTextRowView = memo(function AssistantTextRowView({
   );
   const visiblePreviewCards = previewCards && previewCards.length > 0 ? previewCards : null;
   const textElement = useRef<HTMLDivElement>(null);
-  const paintFrames = useRef<number[]>([]);
-  useEffect(
-    () => () => {
-      for (const frame of paintFrames.current) cancelAnimationFrame(frame);
-    },
-    [],
-  );
-  useLayoutEffect(() => {
-    if (context.workspaceIdentity || !context.sessionId) return;
-    const observer = getLocalTtftObserver();
-    const args = [context.workspacePath, context.sessionId, row.turnId, row.rowId] as const;
-    if (!observer?.needsTextRender(...args)) return;
-    const element = textElement.current;
-    if (!element?.textContent?.trim()) return;
-    const visible = () => {
-      if (
-        !element.isConnected ||
-        document.visibilityState !== "visible" ||
-        !element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
-      )
-        return false;
-      const rect = element.getBoundingClientRect();
-      return (
-        rect.bottom > 0 &&
-        rect.right > 0 &&
-        rect.top < window.innerHeight &&
-        rect.left < window.innerWidth
-      );
-    };
-    if (!observer.textRendered(...args, "committed", visible())) return;
-    // 接收帧早于 React 提交；两次 rAF 只代表经过绘制机会，不能声称像素已上屏。
-    // 流式文本更新不能取消首帧观察，仅组件卸载取消，避免高频更新把计时拖到整轮结束。
-    paintFrames.current.push(
-      requestAnimationFrame(() => {
-        paintFrames.current.push(
-          requestAnimationFrame(() => {
-            observer.textRendered(...args, "paint_estimate", visible());
-          }),
-        );
-      }),
-    );
-  }, [
-    context.workspaceIdentity,
-    context.workspacePath,
-    context.sessionId,
-    row.turnId,
-    row.rowId,
-    visibleText,
-  ]);
   return (
     <RowShell rowId={row.rowId} className="group/assistant-row">
       {/* M5④ 阶段2：assistant 文本走 streamdown（MessageResponse），

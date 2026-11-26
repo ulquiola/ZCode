@@ -95,10 +95,6 @@ import {
 } from "@/hooks/useUsageEntitlement.js";
 import { useToolbarConfigOptions } from "@/hooks/useZCodeConfig.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import {
-  createCodingPlanFunnelContext,
-  resolveCodingPlanEntryPlanState,
-} from "@/lib/codingPlanFunnelTelemetry.js";
 import { useShortcutCommandLabel } from "@/shortcuts/useShortcutBindings.js";
 import { logger } from "@/logger.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
@@ -121,6 +117,7 @@ import {
   resolveDraftModelThoughtOption,
   resolveDraftThoughtCurrentValue,
 } from "@/v4/composer/draftWorkspaceDefaults.js";
+import { isApiKeyAccess } from "@zcode/provider";
 
 // 拆分件再导出（模式选择移居 V4ComposerModeControls，超行数拆分）：
 // 既有消费方（ConversationComposer）继续从本模块入口 import，接口面不变。
@@ -558,17 +555,6 @@ function V4ComposerModelControlsImpl({
     (providerId: string) => {
       openCodingPlanUpgrade({
         providerId,
-        funnelContext: createCodingPlanFunnelContext({
-          providerId,
-          upgradeSource: "session_token_usage",
-          eventRegion: "app.session",
-          eventText: intl.formatMessage({ id: "chat.quota.action.upgrade" }),
-          entryPlanState: resolveCodingPlanEntryPlanState({
-            providerId,
-            displayStatus: "purchased",
-            planLevel: "start",
-          }),
-        }),
       });
     },
     [intl, openCodingPlanUpgrade],
@@ -1429,4 +1415,3 @@ function V4ComposerModelControlsImpl({
 }
 
 export const V4ComposerModelControls = memo(V4ComposerModelControlsImpl);
-import { isApiKeyAccess } from "@zcode/provider";

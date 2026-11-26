@@ -10,7 +10,6 @@ import { ZCODE_JWT_INVALID_BROADCAST_CHANNEL } from "@zcode/shared";
 import type { IServiceAccessor } from "@zcode/services";
 import { useAlertDialog } from "@/hooks/useAlertDialog.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import { reportAppTelemetryEvent, resolveProviderTelemetryLabel } from "@/lib/appTelemetry.js";
 import { logger } from "@/logger.js";
 import type { ModelProviderFamilyConnectionSelection } from "@/lib/modelProviderFamilyConnectionSelection.js";
 import {
@@ -28,7 +27,7 @@ export { refreshRestoredOAuthProviderFamilyAfterStartup } from "@/root/oauthProv
 
 export async function handleOAuthCallbackSuccess(params: {
   result: OAuthSessionCallbackResult;
-  platform: Pick<IPlatformService, "reportTelemetryEvent">;
+  platform: IPlatformService;
   refreshLatestModelProviderFamilySelection?: (
     provider: OAuthProviderId,
   ) => Promise<ModelProviderFamilyConnectionSelection | null>;
@@ -37,7 +36,6 @@ export async function handleOAuthCallbackSuccess(params: {
   setUser: (user: UserInfo | null) => void;
   setOAuthError: (error: string | null) => void;
 }) {
-  const loginProvider = resolveProviderTelemetryLabel(params.result.provider);
   params.setUser(params.result.userInfo);
   params.setOAuthError(null);
   if (params.refreshLatestModelProviderFamilySelection) {
@@ -54,20 +52,7 @@ export async function handleOAuthCallbackSuccess(params: {
   }
   // selectedKey 与账号状态收敛后统一刷新 Account Source 与 Registry。
   await params.refreshProviderState();
-  if (loginProvider) {
-    void reportAppTelemetryEvent(
-      params.platform,
-      {
-        elementName: "app_login_success",
-        eventRegion: "app_profile",
-        eventType: "view",
-        eventExtraDetail: {
-          login_provider: loginProvider,
-        },
-      },
-      "Root",
-    );
-  }
+
   logger.info("[Root] OAuth 登录成功:", params.result.userInfo.username);
 }
 

@@ -199,7 +199,6 @@ export interface WorkbenchShellBinding {
   workspacePath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  /** Prompt 模板埋点当前仅覆盖 Desktop。 */
   isDesktop?: boolean;
   readOnly?: boolean;
   readOnlyReason?: string;
@@ -410,7 +409,6 @@ export function WorkbenchLeafPane({
           readOnly={readOnly}
           readOnlyReason={isShellWorkspace ? shell.readOnlyReason : undefined}
           sessionId={sessionId}
-          openTrigger={isPrimary ? "sidebar" : "split"}
           activeSelectionSideChatSessionId={resolvePaneActiveSelectionSideChatSessionId(
             sessionId,
             shell.activeSessionId ?? shell.sessionId,

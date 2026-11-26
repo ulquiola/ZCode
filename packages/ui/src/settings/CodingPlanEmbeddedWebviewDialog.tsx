@@ -12,10 +12,8 @@ import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useZCodeStoreWithDefault } from "@/store/StoreProvider.js";
 import { normalizeThemePreference, resolveTheme } from "@/useTheme.js";
 import type { CodingPlanProviderId } from "@/settings/model-provider-section/constants.js";
-import type { CodingPlanFunnelContext } from "@/lib/codingPlanFunnelTelemetry.js";
 import {
   buildCodingPlanEmbeddedWebviewUrl,
-  buildCodingPlanEmbeddedReportContext,
   createCodingPlanAuthInjectionScript,
   createCodingPlanCredentialClearScript,
   createCodingPlanLangInjectionScript,
@@ -32,7 +30,6 @@ import {
   CodingPlanWebviewChannels,
   type CodingPlanPurchaseCompletePayload,
   ZCODE_ENV,
-  ZCODE_VERSION,
   toZhOrEnLocale,
 } from "@zcode/shared";
 
@@ -41,7 +38,6 @@ interface CodingPlanEmbeddedWebviewDialogProps {
   open: boolean;
   onOpenResult?: (opened: boolean) => void;
   providerId: CodingPlanProviderId;
-  funnelContext?: CodingPlanFunnelContext | null;
   audience?: CodingPlanPurchaseAudience;
   teamPlanKey?: string | null;
   /**
@@ -76,7 +72,6 @@ export function CodingPlanEmbeddedWebviewDialog({
   onOpenChange,
   open,
   providerId,
-  funnelContext,
   audience,
   teamPlanKey,
   onPurchaseComplete,
@@ -87,7 +82,6 @@ export function CodingPlanEmbeddedWebviewDialog({
   const authGeneration = useRef(0);
   const platform = usePlatform();
   const theme = useZCodeStoreWithDefault((state) => state.theme, "zai-dark");
-  const userId = useZCodeStoreWithDefault((state) => state.user?.id ?? null, null);
   const webviewRef = useRef<ElectronWebviewTag | null>(null);
   const onOpenResultRef = useRef(onOpenResult);
   onOpenResultRef.current = onOpenResult;
@@ -172,12 +166,7 @@ export function CodingPlanEmbeddedWebviewDialog({
         }
         // 持久分区先撤销旧会话，再等待 Host 的原子快照，避免多个单键读取拼接账号。
         await webview.executeJavaScript(createCodingPlanCredentialClearScript(), true);
-        const [session, deviceMid] = await Promise.all([
-          oauthService.getWebsiteSession(),
-          Promise.resolve()
-            .then(() => platform.getDeviceId())
-            .catch(() => null),
-        ]);
+        const session = await oauthService.getWebsiteSession();
         const current = await oauthService.getAccountAvailability();
         if (
           generation !== authGeneration.current ||
@@ -205,18 +194,11 @@ export function CodingPlanEmbeddedWebviewDialog({
               ? session.legacyOAuthToken
               : null,
         };
-        const reportContext = buildCodingPlanEmbeddedReportContext({
-          funnelContext,
-          deviceMid,
-          userId: session?.userId,
-          appVersion: ZCODE_VERSION,
-        });
         const script = createCodingPlanAuthInjectionScript({
           provider,
           credentials,
           theme: embeddedTheme,
           locale: webviewLocale,
-          reportContext,
           loginProvider: session?.loginProvider ?? null,
           expectedUrl: currentUrl,
         });
@@ -237,7 +219,7 @@ export function CodingPlanEmbeddedWebviewDialog({
         });
       }
     },
-    [oauthService, embeddedTheme, funnelContext, platform, provider, userId, webviewLocale],
+    [oauthService, embeddedTheme, provider, webviewLocale],
   );
 
   // App locale 运行时变化时，对已 dom-ready 的 webview 注入 lang 更新脚本，

@@ -1,6 +1,8 @@
 import { BrowserWindow, MessageChannelMain } from "electron";
 import type { MessagePortMain, UtilityProcess as ElectronUtilityProcess } from "electron";
-import { HostMessageTypes, type RemoteUsageRemoteKind } from "@zcode/shared";
+import { HostMessageTypes } from "@zcode/shared";
+
+type RemoteUsageRemoteKind = "ssh" | "wsl" | "docker" | "server";
 
 type WebRemoteControlSharedHostKind = "local" | "remote";
 
