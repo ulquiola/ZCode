@@ -1,0 +1,104 @@
+name: Release Desktop Assets
+
+on:
+  push:
+    tags:
+      - "v*-audit.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build and attach desktop installers to
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-desktop-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.target }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: mac
+            arch: arm64
+          - runner: macos-15-intel
+            target: mac
+            arch: x64
+          - runner: windows-2022
+            target: win
+            arch: x64
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: "0"
+
+      - name: Prepare desktop runtime assets
+        run: pnpm prepare:desktop-runtime
+        env:
+          ZCODE_TARGET_OS: ${{ matrix.target }}
+          ZCODE_TARGET_ARCH: ${{ matrix.arch }}
+
+      - name: Build workspace
+        run: pnpm build:bootstrap
+        env:
+          ZCODE_TARGET_OS: ${{ matrix.target }}
+          ZCODE_TARGET_ARCH: ${{ matrix.arch }}
+
+      - name: Package desktop installers
+        run: >-
+          pnpm bundle:desktop --
+          --os ${{ matrix.target }}
+          --arch ${{ matrix.arch }}
+          --skip-build
+          --skip-prepare
+        env:
+          ZCODE_TARGET_OS: ${{ matrix.target }}
+          ZCODE_TARGET_ARCH: ${{ matrix.arch }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
+          ELECTRON_BUILDER_BINARIES_MIRROR: https://github.com/electron-userland/electron-builder-binaries/releases/download/
+
+      - name: Upload installers to GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --verify-tag --prerelease --title "$TAG" --generate-notes
+          artifacts=$(find packages/desktop/dist -maxdepth 1 -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.exe' \))
+          if [ -z "$artifacts" ]; then
+            echo "No desktop installer artifacts found in packages/desktop/dist"
+            exit 1
+          fi
+          printf '%s\n' "$artifacts" | while IFS= read -r artifact; do
+            gh release upload "$TAG" "$artifact" --clobber
+          done

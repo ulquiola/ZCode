@@ -177,6 +177,10 @@ pnpm bundle:desktop -- --help
 sudo xattr -rd com.apple.quarantine /Applications/ZCode.app
 ```
 
+### 发布安装包
+
+推送 `v*-audit.*` 标签时，[release-desktop 工作流](.github/workflows/release-desktop.yml) 会在 macOS arm64、macOS x64 和 Windows x64 runner 上构建 DMG/ZIP/NSIS 安装包，并上传到对应的 GitHub Release。也可以在 Actions 页面手动指定已有标签运行。
+
 ### ZCode 命令行版
 
 构建入口为 `pnpm build:zcode`。脚本会依次构建 CLI/TUI、后端和 Web，收集 TUI 的原生库、worker 与运行时依赖，再组装发行包；运行发行包仍需要 Node.js，版本以 `mise.toml` 为准。
